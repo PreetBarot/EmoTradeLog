@@ -26,6 +26,17 @@ const userSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
     },
+    apiKey: {
+      type: String,
+      unique: true,
+      required: false,
+      default: null,
+    },
+    investorPassword: {
+      type: String,
+      required: false,
+      select: false, // never return by default
+    },
   },
   {
     timestamps: true,

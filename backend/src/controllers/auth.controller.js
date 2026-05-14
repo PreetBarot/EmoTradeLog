@@ -1,6 +1,9 @@
+
 import User from "../models/User.model.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import { encrypt } from "../utils/encryption.js";
 
 const isValidEmail = (email) => /^\S+@\S+\.\S+$/.test(email);
 
@@ -15,7 +18,7 @@ const generateToken = (userId) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, investorPassword } = req.body;
 
     if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({
@@ -48,11 +51,28 @@ export const registerUser = async (req, res) => {
       });
     }
 
+
+    // Generate unique API key
+    let apiKey;
+    let apiKeyExists = true;
+    while (apiKeyExists) {
+      apiKey = crypto.randomBytes(32).toString("hex");
+      apiKeyExists = await User.findOne({ apiKey });
+    }
+
+
+    let encryptedInvestorPassword = undefined;
+    if (investorPassword) {
+      encryptedInvestorPassword = encrypt(investorPassword);
+    }
+
     const user = await User.create({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: normalizedEmail,
       password,
+      apiKey,
+      ...(encryptedInvestorPassword && { investorPassword: encryptedInvestorPassword }),
     });
 
     return res.status(201).json({
@@ -63,6 +83,7 @@ export const registerUser = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        apiKey: user.apiKey,
       },
     });
   } catch (error) {
@@ -129,6 +150,7 @@ export const loginUser = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        apiKey: user.apiKey,
       },
     });
   } catch (error) {

@@ -2,8 +2,11 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
+
 import authRoutes from './routes/auth.routes.js';
 import tradeRoutes from './routes/tradeRoutes.js';
+import mt5Routes from './routes/mt5Routes.js';
+import investorPasswordRoutes from './routes/investorPasswordRoutes.js';
 
 dotenv.config();
 
@@ -14,8 +17,11 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+
 app.use('/api/auth', authRoutes);
 app.use('/api/trades', tradeRoutes);
+app.use('/api/mt5', mt5Routes);
+app.use('/api/investor-password', investorPasswordRoutes); // Protect this route in production!
 
 app.get('/', (req, res) => {
   res.send('EmoTradeLog API is running...');
