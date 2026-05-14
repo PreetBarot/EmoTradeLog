@@ -25,7 +25,9 @@ import {
 } from 'lucide-react';
 
 
-const Sidebar = () => {
+import { X } from 'lucide-react';
+
+const Sidebar = ({ onClose }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [user, setUser] = useState({ name: 'Trader', email: 'trader@example.com' });
 
@@ -69,6 +71,7 @@ const Sidebar = () => {
   const NavItem = ({ item }) => (
     <NavLink
       to={item.path}
+      onClick={onClose}
       className={({ isActive }) =>
         `flex items-center px-4 py-3 mb-2 rounded-xl transition-all duration-300 group ${
           isActive
@@ -99,13 +102,13 @@ const Sidebar = () => {
     >
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-8 bg-gray-900 border border-white/10 text-gray-400 hover:text-white rounded-full p-1 z-10 transition-colors"
+        className="hidden lg:block absolute -right-3 top-8 bg-gray-900 border border-white/10 text-gray-400 hover:text-white rounded-full p-1 z-10 transition-colors"
       >
         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
       </button>
 
       {/* Logo Area */}
-      <div className="h-20 flex items-center px-6 border-b border-white/5">
+      <div className="h-20 flex items-center justify-between px-6 border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center flex-shrink-0 shadow-[0_0_15px_rgba(234,179,8,0.3)]">
             <span className="text-black font-bold text-xl">E</span>
@@ -121,6 +124,11 @@ const Sidebar = () => {
             </motion.div>
           )}
         </div>
+        
+        {/* Mobile Close Button */}
+        <button onClick={onClose} className="lg:hidden text-gray-400 hover:text-white">
+          <X size={20} />
+        </button>
       </div>
 
       {/* Navigation Scroll Area */}

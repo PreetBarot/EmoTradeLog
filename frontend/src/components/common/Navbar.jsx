@@ -10,7 +10,7 @@ const Navbar = () => {
   const title = pathName.charAt(0).toUpperCase() + pathName.slice(1).replace('-', ' ');
 
   return (
-    <header className="h-20 flex items-center justify-between px-8 bg-gray-950/50 backdrop-blur-md border-b border-white/5 sticky top-0 z-20">
+    <header className="h-16 md:h-20 flex items-center justify-between px-4 md:px-8 bg-gray-950/50 backdrop-blur-md border-b border-white/5 sticky top-0 z-20">
       <div className="flex items-center gap-4">
         <h1 className="text-2xl font-bold text-white tracking-tight">{title}</h1>
       </div>
@@ -39,9 +39,9 @@ const Navbar = () => {
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="btn-gold py-2 px-4 text-sm font-bold flex items-center gap-2 rounded-xl ml-4"
+            className="btn-gold py-2 px-3 md:px-4 text-xs md:text-sm font-bold flex items-center gap-2 rounded-xl ml-2 md:ml-4"
           >
-            <Plus size={16} /> Log Trade
+            <Plus size={16} /> <span className="hidden sm:inline">Log Trade</span>
           </button>
         </div>
       </div>
