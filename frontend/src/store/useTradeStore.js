@@ -12,7 +12,8 @@ const useTradeStore = create((set, get) => ({
       if (!userInfo) return;
       const { token } = JSON.parse(userInfo);
 
-      const res = await fetch('/api/trades', {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/trades`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -35,7 +36,8 @@ const useTradeStore = create((set, get) => ({
       if (!userInfo) return;
       const { token } = JSON.parse(userInfo);
 
-      const res = await fetch('/api/trades', {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/trades`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +66,8 @@ const useTradeStore = create((set, get) => ({
       if (!userInfo) return;
       const { token } = JSON.parse(userInfo);
 
-      const res = await fetch(`/api/trades/${id}`, {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/trades/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +99,8 @@ const useTradeStore = create((set, get) => ({
       if (!userInfo) return;
       const { token } = JSON.parse(userInfo);
 
-      const res = await fetch(`/api/trades/${id}`, {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/trades/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`
