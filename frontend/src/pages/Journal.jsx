@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, CheckSquare, ImagePlus, Save, Frown, Meh, Smile, Target, Brain, ArrowRight, Activity, BarChart2, Plus, Clock, PlayCircle } from 'lucide-react';
+import { BookOpen, CheckSquare, ImagePlus, Save, Frown, Meh, Smile, Target, Brain, ArrowRight, Activity, BarChart2, Plus, Clock, PlayCircle, Trash2 } from 'lucide-react';
 import useTradeStore from '../store/useTradeStore';
 import { useEffect } from 'react';
 
@@ -156,7 +156,21 @@ const Journal = () => {
                   <span className="text-gray-400">${trade.entry}</span>
                   <span className={`font-bold ml-auto ${trade.pnl > 0 ? 'text-green-400' : 'text-red-400'}`}>${trade.pnl}</span>
                 </div>
-                <div className="text-xs text-gray-500">{new Date(trade.date).toLocaleDateString()}</div>
+                <div className="flex justify-between items-center text-xs text-gray-500">
+                  <span>{new Date(trade.date).toLocaleDateString()}</span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if(window.confirm('Are you sure you want to delete this trade?')) {
+                        useTradeStore.getState().deleteTrade(trade._id);
+                        if (selectedTrade?._id === trade._id) setSelectedTrade(null);
+                      }
+                    }}
+                    className="p-1 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -203,6 +217,17 @@ const Journal = () => {
                 </button>
                 <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-white font-medium transition-colors">
                   <BarChart2 size={16} /> Analytics
+                </button>
+                <button 
+                  onClick={() => {
+                    if(window.confirm('Are you sure you want to delete this trade?')) {
+                      useTradeStore.getState().deleteTrade(selectedTrade._id);
+                      setSelectedTrade(null);
+                    }
+                  }}
+                  className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors border border-red-500/20"
+                >
+                  <Trash2 size={16} />
                 </button>
                 <button onClick={handleSave} className="btn-gold py-2 px-6 text-sm flex items-center gap-2">
                   <Save size={16} /> Save

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, Download, Plus, Inbox } from 'lucide-react';
+import { Search, Filter, Download, Plus, Inbox, Trash2 } from 'lucide-react';
 import useTradeStore from '../store/useTradeStore';
 import { useEffect } from 'react';
 import AddTradeModal from '../components/trades/AddTradeModal';
@@ -79,6 +79,7 @@ const Trades = () => {
                     <th className="px-6 py-4 font-medium">R:R</th>
                     <th className="px-6 py-4 font-medium">Result</th>
                     <th className="px-6 py-4 font-medium text-right">P&L</th>
+                    <th className="px-6 py-4 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -111,6 +112,19 @@ const Trades = () => {
                       </td>
                       <td className={`px-6 py-4 font-bold text-right ${trade.pnl > 0 ? 'text-green-400' : 'text-red-400'}`}>
                         ${trade.pnl}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if(window.confirm('Are you sure you want to delete this trade?')) {
+                              useTradeStore.getState().deleteTrade(trade._id);
+                            }
+                          }}
+                          className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </td>
                     </tr>
                   ))}
