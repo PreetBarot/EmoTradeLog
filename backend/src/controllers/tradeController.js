@@ -57,6 +57,7 @@ const updateTrade = async (req, res) => {
       trade.lessonsLearned = req.body.lessonsLearned || trade.lessonsLearned;
       trade.rating = req.body.rating || trade.rating;
       trade.tags = req.body.tags || trade.tags;
+      if (req.body.screenshots) trade.screenshots = req.body.screenshots;
       if (req.body.exit !== undefined) trade.exit = req.body.exit;
       if (req.body.pnl !== undefined) {
         trade.pnl = req.body.pnl;

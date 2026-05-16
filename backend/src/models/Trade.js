@@ -20,7 +20,8 @@ const tradeSchema = new mongoose.Schema({
   postTradeReview: { type: String },
   lessonsLearned: { type: String },
   rating: { type: Number, min: 1, max: 10, default: 5 },
-  tags: [{ type: String }]
+  tags: [{ type: String }],
+  screenshots: [{ type: String }]
 }, {
   timestamps: true
 });

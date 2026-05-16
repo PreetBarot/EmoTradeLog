@@ -8,9 +8,40 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState(1);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Cannot connect to the server.");
+      }
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to send OTP');
+      
+      setStep(2);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -28,7 +59,7 @@ const Register = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ firstName, lastName, email, password }),
+        body: JSON.stringify({ firstName, lastName, email, password, otp }),
       });
 
       const contentType = res.headers.get("content-type");
@@ -137,9 +168,34 @@ const Register = () => {
               </div>
             </div>
 
-            <button disabled={loading} type="submit" className="w-full btn-gold flex items-center justify-center gap-2 mt-4 disabled:opacity-50">
-              {loading ? 'Creating Account...' : 'Create Account'} <ArrowRight size={18} />
-            </button>
+            {step === 1 ? (
+              <button onClick={handleSendOtp} disabled={loading} type="button" className="w-full btn-gold flex items-center justify-center gap-2 mt-4 disabled:opacity-50">
+                {loading ? 'Sending OTP...' : 'Send OTP'} <ArrowRight size={18} />
+              </button>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Verification Code (OTP)</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                    <input
+                      type="text"
+                      placeholder="Enter 6-digit OTP"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-yellow-500/50 focus:bg-white/10 transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+                <button disabled={loading} type="submit" className="w-full btn-gold flex items-center justify-center gap-2 mt-4 disabled:opacity-50">
+                  {loading ? 'Creating Account...' : 'Verify & Create Account'} <ArrowRight size={18} />
+                </button>
+                <button onClick={() => setStep(1)} type="button" className="w-full text-gray-400 hover:text-white text-sm mt-2">
+                  Back
+                </button>
+              </>
+            )}
           </form>
 
           <div className="mt-8 text-center text-sm text-gray-400">

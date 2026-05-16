@@ -11,10 +11,80 @@ const Journal = () => {
   const [activeTab, setActiveTab] = useState('All');
   const [selectedTrade, setSelectedTrade] = useState(null);
   const [rating, setRating] = useState(5);
+  const [formData, setFormData] = useState({});
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchTrades();
   }, [fetchTrades]);
+
+  useEffect(() => {
+    if (selectedTrade) {
+      setFormData({
+        preTradeAnalysis: selectedTrade.preTradeAnalysis || '',
+        postTradeReview: selectedTrade.postTradeReview || '',
+        emotions: selectedTrade.emotion || '',
+        lessonsLearned: selectedTrade.lessonsLearned || '',
+        tags: selectedTrade.tags ? selectedTrade.tags.join(', ') : '',
+        screenshots: selectedTrade.screenshots || [],
+      });
+      setRating(selectedTrade.rating || 5);
+    }
+  }, [selectedTrade]);
+
+  const journaledTrades = trades.filter(t => t.status === 'Journaled');
+  const pendingTrades = trades.filter(t => t.status === 'Pending');
+
+  const filteredTrades = activeTab === 'All' ? trades 
+    : activeTab === 'Journaled' ? journaledTrades 
+    : pendingTrades;
+
+  const handleSave = async () => {
+    if (!selectedTrade) return;
+    try {
+      await useTradeStore.getState().updateTrade(selectedTrade._id, {
+        status: 'Journaled',
+        preTradeAnalysis: formData.preTradeAnalysis,
+        postTradeReview: formData.postTradeReview,
+        emotion: formData.emotions,
+        lessonsLearned: formData.lessonsLearned,
+        tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+        rating: Number(rating),
+        screenshots: formData.screenshots,
+      });
+      alert('Trade journal saved!');
+      setSelectedTrade(prev => ({...prev, status: 'Journaled'}));
+    } catch (err) {
+      alert('Failed to save trade: ' + err.message);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const fileData = new FormData();
+    fileData.append('image', file);
+
+    setIsUploading(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/upload`, {
+        method: 'POST',
+        body: fileData,
+      });
+      const data = await res.json();
+      
+      setFormData(prev => ({
+        ...prev,
+        screenshots: [...(prev.screenshots || []), data.url]
+      }));
+    } catch (err) {
+      alert('Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const checklistItems = [
     'Checked higher timeframe',
@@ -39,17 +109,15 @@ const Journal = () => {
           </div>
           
           <div className="flex gap-2 p-1 bg-black/40 rounded-lg">
-            {['All 6', 'Journaled 1', 'Pending 5'].map(tab => {
-              const name = tab.split(' ')[0];
-              const count = tab.split(' ')[1];
-              const isActive = activeTab === name;
+            {[{name: 'All', count: trades.length}, {name: 'Journaled', count: journaledTrades.length}, {name: 'Pending', count: pendingTrades.length}].map(tab => {
+              const isActive = activeTab === tab.name;
               return (
                 <button
-                  key={name}
-                  onClick={() => setActiveTab(name)}
+                  key={tab.name}
+                  onClick={() => setActiveTab(tab.name)}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${isActive ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
                 >
-                  {name} <span className="ml-1 opacity-50">{count}</span>
+                  {tab.name} <span className="ml-1 opacity-50">{tab.count}</span>
                 </button>
               );
             })}
@@ -67,7 +135,7 @@ const Journal = () => {
               <p className="text-gray-400 text-sm">No trades to journal. Sync your broker or add a trade manually.</p>
             </div>
           ) : (
-            trades.map(trade => (
+            filteredTrades.map(trade => (
               <div 
                 key={trade._id} 
                 onClick={() => setSelectedTrade(trade)}
@@ -136,7 +204,7 @@ const Journal = () => {
                 <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-white font-medium transition-colors">
                   <BarChart2 size={16} /> Analytics
                 </button>
-                <button className="btn-gold py-2 px-6 text-sm flex items-center gap-2">
+                <button onClick={handleSave} className="btn-gold py-2 px-6 text-sm flex items-center gap-2">
                   <Save size={16} /> Save
                 </button>
               </div>
@@ -152,6 +220,8 @@ const Journal = () => {
                   </label>
                   <textarea
                     rows={3}
+                    value={formData.preTradeAnalysis || ''}
+                    onChange={(e) => setFormData({...formData, preTradeAnalysis: e.target.value})}
                     placeholder="What did you see? Plan, thesis, levels, risk..."
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500/50 focus:bg-white/5 transition-all resize-none"
                   ></textarea>
@@ -163,6 +233,8 @@ const Journal = () => {
                   </label>
                   <textarea
                     rows={3}
+                    value={formData.postTradeReview || ''}
+                    onChange={(e) => setFormData({...formData, postTradeReview: e.target.value})}
                     placeholder="What happened? Execution, slippage, improvements..."
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:bg-white/5 transition-all resize-none"
                   ></textarea>
@@ -187,6 +259,8 @@ const Journal = () => {
                   </label>
                   <textarea
                     rows={2}
+                    value={formData.emotions || ''}
+                    onChange={(e) => setFormData({...formData, emotions: e.target.value})}
                     placeholder="Calm, anxious, FOMO, confident..."
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500/50 transition-all resize-none"
                   ></textarea>
@@ -197,6 +271,8 @@ const Journal = () => {
                   </label>
                   <textarea
                     rows={2}
+                    value={formData.lessonsLearned || ''}
+                    onChange={(e) => setFormData({...formData, lessonsLearned: e.target.value})}
                     placeholder="Key takeaways to repeat or avoid..."
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500/50 transition-all resize-none"
                   ></textarea>
@@ -210,6 +286,8 @@ const Journal = () => {
                   </label>
                   <input
                     type="text"
+                    value={formData.tags || ''}
+                    onChange={(e) => setFormData({...formData, tags: e.target.value})}
                     placeholder="breakout, trend, news (comma separated)"
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500/50 transition-all"
                   />
@@ -265,10 +343,24 @@ const Journal = () => {
                 <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
                   <ImagePlus size={14} className="text-blue-400" /> Screenshots
                 </label>
-                <button className="w-32 h-32 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-yellow-500/50 hover:bg-white/5 transition-colors text-gray-400 group">
-                  <Plus size={24} className="group-hover:text-yellow-500 transition-colors" />
-                  <span className="text-sm font-medium">Add Image</span>
-                </button>
+                <div className="flex flex-wrap gap-4 mt-2">
+                  {formData.screenshots?.map((url, i) => (
+                    <div key={i} className="relative w-32 h-32 border border-white/10 rounded-xl overflow-hidden">
+                      <img src={`${import.meta.env.VITE_API_URL || ''}${url}`} alt="trade" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                  <label className="w-32 h-32 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-yellow-500/50 hover:bg-white/5 transition-colors text-gray-400 group cursor-pointer relative overflow-hidden">
+                    {isUploading ? (
+                      <span className="text-sm font-medium">Uploading...</span>
+                    ) : (
+                      <>
+                        <Plus size={24} className="group-hover:text-yellow-500 transition-colors" />
+                        <span className="text-sm font-medium">Add Image</span>
+                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleImageUpload} accept="image/*" />
+                      </>
+                    )}
+                  </label>
+                </div>
               </div>
 
               {/* Bottom Trade Summary Card */}

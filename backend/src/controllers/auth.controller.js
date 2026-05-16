@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { encrypt } from "../utils/encryption.js";
+import Otp from "../models/Otp.js";
+import sendEmail from "../utils/sendEmail.js";
 
 const isValidEmail = (email) => /^\S+@\S+\.\S+$/.test(email);
 
@@ -16,14 +18,51 @@ const generateToken = (userId) => {
   return jwt.sign({ id: userId }, jwtSecret, { expiresIn: "7d" });
 };
 
+export const sendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || !isValidEmail(email)) {
+      return res.status(400).json({ success: false, message: "Valid email is required" });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: "Email already registered" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await Otp.deleteMany({ email: normalizedEmail }); // Clear previous OTPs
+    await Otp.create({ email: normalizedEmail, otp });
+
+    const message = `Your EmoTradeLog verification code is: ${otp}\n\nThis code will expire in 5 minutes.`;
+    await sendEmail({
+      email: normalizedEmail,
+      subject: "EmoTradeLog - Email Verification",
+      message,
+    });
+    
+    // For local dev without email configured, print it to console
+    if (!process.env.EMAIL_HOST) {
+      console.log(`[DEV OTP] for ${normalizedEmail}: ${otp}`);
+    }
+
+    res.status(200).json({ success: true, message: "OTP sent successfully" });
+  } catch (error) {
+    console.error("[AUTH] sendOtp error:", error);
+    res.status(500).json({ success: false, message: "Failed to send OTP" });
+  }
+};
+
 export const registerUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, investorPassword } = req.body;
+    const { firstName, lastName, email, password, investorPassword, otp } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email || !password || !otp) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required",
+        message: "All fields including OTP are required",
       });
     }
 
@@ -51,6 +90,13 @@ export const registerUser = async (req, res) => {
       });
     }
 
+    const validOtp = await Otp.findOne({ email: normalizedEmail, otp });
+    if (!validOtp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP",
+      });
+    }
 
     // Generate unique API key
     let apiKey;
@@ -74,6 +120,8 @@ export const registerUser = async (req, res) => {
       apiKey,
       ...(encryptedInvestorPassword && { investorPassword: encryptedInvestorPassword }),
     });
+
+    await Otp.deleteMany({ email: normalizedEmail });
 
     return res.status(201).json({
       success: true,

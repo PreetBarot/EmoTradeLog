@@ -7,7 +7,19 @@ import authRoutes from './routes/auth.routes.js';
 import tradeRoutes from './routes/tradeRoutes.js';
 import mt5Routes from './routes/mt5Routes.js';
 import investorPasswordRoutes from './routes/investorPasswordRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure public/uploads directory exists
+const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 dotenv.config();
 
 const app = express();
@@ -22,6 +34,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/trades', tradeRoutes);
 app.use('/api/mt5', mt5Routes);
 app.use('/api/investor-password', investorPasswordRoutes); // Protect this route in production!
+app.use('/api/upload', uploadRoutes);
+
+app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 
 app.get('/', (req, res) => {
   res.send('EmoTradeLog API is running...');

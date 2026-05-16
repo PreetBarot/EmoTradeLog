@@ -2,14 +2,25 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, Target, Zap, Clock, Calendar, BarChart2, DollarSign, Activity } from 'lucide-react';
+import useTradeStore from '../store/useTradeStore';
+import { useEffect, useMemo } from 'react';
+import { calculateTradeStats } from '../utils/tradeStats';
 
 const mockEquityData = [];
 
 const mockDayPerformance = [];
 
 const Analysis = () => {
+  const { trades, fetchTrades } = useTradeStore();
   const [timePeriod, setTimePeriod] = useState('30 Days');
   const [filterBy, setFilterBy] = useState('All Trades');
+
+  useEffect(() => {
+    fetchTrades();
+  }, [fetchTrades]);
+
+  const journaledTrades = useMemo(() => trades.filter(t => t.status === 'Journaled'), [trades]);
+  const stats = useMemo(() => calculateTradeStats(journaledTrades), [journaledTrades]);
 
   return (
     <div className="space-y-6 pb-12">
@@ -59,28 +70,28 @@ const Analysis = () => {
         <div className="glass-card p-6 border-t-4 border-t-blue-500">
           <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mb-4"><DollarSign size={16} /></div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total P&L</p>
-          <h3 className="text-3xl font-bold text-blue-400 mb-2">$0.00</h3>
-          <p className="text-xs text-gray-400">From 0 closed trades</p>
+          <h3 className="text-3xl font-bold text-blue-400 mb-2">${stats.totalPnl.toFixed(2)}</h3>
+          <p className="text-xs text-gray-400">From {stats.totalTrades} closed trades</p>
         </div>
         
         <div className="glass-card p-6 border-t-4 border-t-green-500">
           <div className="w-8 h-8 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center mb-4"><Target size={16} /></div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Win Rate</p>
-          <h3 className="text-3xl font-bold text-green-400 mb-2">0.0%</h3>
-          <p className="text-xs text-gray-400">0 wins • 0 losses</p>
+          <h3 className="text-3xl font-bold text-green-400 mb-2">{stats.winRate.toFixed(1)}%</h3>
+          <p className="text-xs text-gray-400">{stats.wins} wins • {stats.losses} losses</p>
         </div>
 
         <div className="glass-card p-6 border-t-4 border-t-purple-500">
           <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center mb-4"><Zap size={16} /></div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Profit Factor</p>
-          <h3 className="text-3xl font-bold text-purple-400 mb-2">0.0</h3>
+          <h3 className="text-3xl font-bold text-purple-400 mb-2">{stats.profitFactor.toFixed(2)}</h3>
           <p className="text-xs text-gray-400">Gross profit ÷ Gross loss</p>
         </div>
 
         <div className="glass-card p-6 border-t-4 border-t-yellow-500">
           <div className="w-8 h-8 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center mb-4"><Clock size={16} /></div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Expectancy</p>
-          <h3 className="text-3xl font-bold text-yellow-500 mb-2">$0.00</h3>
+          <h3 className="text-3xl font-bold text-yellow-500 mb-2">${stats.expectancy.toFixed(2)}</h3>
           <p className="text-xs text-gray-400">Average profit per trade</p>
         </div>
       </div>
@@ -93,35 +104,35 @@ const Analysis = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Avg Winner</span>
-              <span className="text-lg font-bold text-green-400">$0.00</span>
+              <span className="text-lg font-bold text-green-400">${stats.avgWinner.toFixed(2)}</span>
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Avg Loser</span>
-              <span className="text-lg font-bold text-red-400">$0.00</span>
+              <span className="text-lg font-bold text-red-400">${stats.avgLoser.toFixed(2)}</span>
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Best Trade</span>
-              <span className="text-lg font-bold text-blue-400">$0.00</span>
+              <span className="text-lg font-bold text-blue-400">${stats.bestTrade.toFixed(2)}</span>
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Worst Trade</span>
-              <span className="text-lg font-bold text-red-400">$0.00</span>
+              <span className="text-lg font-bold text-red-400">${stats.worstTrade.toFixed(2)}</span>
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Win Streak</span>
-              <span className="text-lg font-bold text-white">0</span>
+              <span className="text-lg font-bold text-white">-</span>
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Loss Streak</span>
-              <span className="text-lg font-bold text-white">0</span>
+              <span className="text-lg font-bold text-white">-</span>
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Risk:Reward</span>
-              <span className="text-lg font-bold text-yellow-500">0:0</span>
+              <span className="text-lg font-bold text-yellow-500">-</span>
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Open Trades</span>
-              <span className="text-lg font-bold text-white">0</span>
+              <span className="text-lg font-bold text-white">-</span>
             </div>
           </div>
         </div>

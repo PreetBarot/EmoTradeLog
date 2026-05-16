@@ -11,7 +11,8 @@ import {
 import { ArrowUpRight, ArrowDownRight, Activity, Target, Zap, Brain, Flame, Lock, Unlock, Inbox } from 'lucide-react';
 
 import useTradeStore from '../store/useTradeStore';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { calculateTradeStats } from '../utils/tradeStats';
 
 const mockEquityData = [];
 
@@ -50,16 +51,18 @@ const Dashboard = () => {
     fetchTrades();
   }, [fetchTrades]);
 
-  const recentTrades = trades.slice(0, 5);
+  const journaledTrades = useMemo(() => trades.filter(t => t.status === 'Journaled'), [trades]);
+  const stats = useMemo(() => calculateTradeStats(journaledTrades), [journaledTrades]);
+  const recentTrades = journaledTrades.slice(0, 5);
 
   return (
     <div className="space-y-6 pb-12">
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Realized P&L" value="$0.00" subtext="0.0%" trend="up" icon={<Lock size={48} />} delay={0.1} />
-        <StatCard title="Unrealized P&L" value="$0.00" subtext="None" trend="up" icon={<Unlock size={48} />} delay={0.2} />
-        <StatCard title="Win Rate" value="0.0%" subtext="0.0%" trend="up" icon={<Target size={48} />} delay={0.3} />
-        <StatCard title="Profit Factor" value="0.0" subtext="0.0" trend="up" icon={<Zap size={48} />} delay={0.4} />
+        <StatCard title="Realized P&L" value={`$${stats.totalPnl.toFixed(2)}`} subtext="-" trend={stats.totalPnl >= 0 ? "up" : "down"} icon={<Lock size={48} />} delay={0.1} />
+        <StatCard title="Unrealized P&L" value="$0.00" subtext="-" trend="up" icon={<Unlock size={48} />} delay={0.2} />
+        <StatCard title="Win Rate" value={`${stats.winRate.toFixed(1)}%`} subtext="-" trend={stats.winRate >= 50 ? "up" : "down"} icon={<Target size={48} />} delay={0.3} />
+        <StatCard title="Profit Factor" value={stats.profitFactor.toFixed(2)} subtext="-" trend={stats.profitFactor >= 1 ? "up" : "down"} icon={<Zap size={48} />} delay={0.4} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -263,25 +266,25 @@ const Dashboard = () => {
               </thead>
               <tbody>
                 {recentTrades.map((trade) => (
-                  <tr key={trade.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
-                    <td className="py-4 font-semibold text-white">{trade.pair}</td>
+                  <tr key={trade._id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                    <td className="py-4 font-semibold text-white">{trade.symbol}</td>
                     <td className="py-4">
                       <span className={`px-2 py-1 rounded text-xs font-bold ${trade.type === 'Long' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'}`}>
                         {trade.type}
                       </span>
                     </td>
                     <td className="py-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${trade.result === 'Win' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                        {trade.result}
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${trade.isWinner ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                        {trade.isWinner ? 'Win' : 'Loss'}
                       </span>
                     </td>
-                    <td className={`py-4 font-bold ${trade.result === 'Win' ? 'text-green-400' : 'text-red-400'}`}>
-                      {trade.pnl}
+                    <td className={`py-4 font-bold ${trade.pnl > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      ${trade.pnl}
                     </td>
                     <td className="py-4">
-                      <span className="text-sm text-gray-300 bg-white/5 px-3 py-1 rounded-full border border-white/5">{trade.emotion}</span>
+                      <span className="text-sm text-gray-300 bg-white/5 px-3 py-1 rounded-full border border-white/5">{trade.emotion || 'Neutral'}</span>
                     </td>
-                    <td className="py-4 text-sm text-gray-500">{trade.time}</td>
+                    <td className="py-4 text-sm text-gray-500">{new Date(trade.date).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
