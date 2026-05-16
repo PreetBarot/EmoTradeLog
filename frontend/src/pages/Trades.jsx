@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, Download, Plus, Inbox, Trash2 } from 'lucide-react';
+import { Search, Filter, Download, Plus, Inbox, Trash2, MoreVertical } from 'lucide-react';
 import useTradeStore from '../store/useTradeStore';
 import { useEffect } from 'react';
 import AddTradeModal from '../components/trades/AddTradeModal';
@@ -8,10 +8,17 @@ import AddTradeModal from '../components/trades/AddTradeModal';
 const Trades = () => {
   const { trades, fetchTrades, isLoading } = useTradeStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   useEffect(() => {
     fetchTrades();
   }, [fetchTrades]);
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenDropdownId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   return (
     <motion.div
@@ -66,7 +73,7 @@ const Trades = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-visible pb-24">
               <table className="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="bg-white/5 text-gray-400 text-sm border-b border-white/10">
@@ -113,18 +120,33 @@ const Trades = () => {
                       <td className={`px-6 py-4 font-bold text-right ${trade.pnl > 0 ? 'text-green-400' : 'text-red-400'}`}>
                         ${trade.pnl}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right relative">
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if(window.confirm('Are you sure you want to delete this trade?')) {
-                              useTradeStore.getState().deleteTrade(trade._id);
-                            }
+                            setOpenDropdownId(openDropdownId === trade._id ? null : trade._id);
                           }}
-                          className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                          className="p-1.5 text-gray-500 hover:text-white rounded transition-colors"
                         >
-                          <Trash2 size={16} />
+                          <MoreVertical size={16} />
                         </button>
+                        
+                        {openDropdownId === trade._id && (
+                          <div className="absolute right-8 top-10 w-32 bg-[#111827] border border-white/10 rounded-lg shadow-xl z-[100] overflow-hidden">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if(window.confirm('Are you sure you want to delete this trade?')) {
+                                  useTradeStore.getState().deleteTrade(trade._id);
+                                  setOpenDropdownId(null);
+                                }
+                              }}
+                              className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-white/5 flex items-center gap-2 transition-colors"
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
