@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -30,6 +30,13 @@ import { X } from 'lucide-react';
 const Sidebar = ({ onClose }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [user, setUser] = useState({ name: 'Trader', email: 'trader@example.com' });
+  const navigate = useNavigate();
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    localStorage.removeItem('userInfo');
+    navigate('/login');
+  };
 
   useEffect(() => {
     const userInfo = localStorage.getItem('userInfo');
@@ -171,10 +178,13 @@ const Sidebar = ({ onClose }) => {
           <Settings size={20} className="flex-shrink-0" />
           {!isCollapsed && <span className="ml-3 font-medium">Settings</span>}
         </NavLink>
-        <NavLink to="/login" className="w-full flex items-center px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all duration-300">
+        <button 
+          onClick={handleLogout} 
+          className="w-full flex items-center px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all duration-300"
+        >
           <LogOut size={20} className="flex-shrink-0" />
           {!isCollapsed && <span className="ml-3 font-medium">Logout</span>}
-        </NavLink>
+        </button>
 
         {/* User Profile Mini */}
         {!isCollapsed && (
