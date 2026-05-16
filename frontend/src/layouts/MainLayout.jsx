@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import Sidebar from '../components/common/Sidebar';
 import Navbar from '../components/common/Navbar';
@@ -6,6 +6,11 @@ import { Menu, X } from 'lucide-react';
 
 const MainLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const userInfo = localStorage.getItem('userInfo');
+  if (!userInfo) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#050505]">
