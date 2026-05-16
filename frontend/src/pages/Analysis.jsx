@@ -14,6 +14,30 @@ const Analysis = () => {
   const { trades, fetchTrades } = useTradeStore();
   const [timePeriod, setTimePeriod] = useState('30 Days');
   const [filterBy, setFilterBy] = useState('All Trades');
+  const [selectedDay, setSelectedDay] = useState(null);
+
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+  const emptyDays = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // 0 is Sunday, make Monday 0
+  const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  const tradesByDay = useMemo(() => {
+    const map = {};
+    trades.forEach(trade => {
+      const d = new Date(trade.date);
+      if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+        const day = d.getDate();
+        if (!map[day]) map[day] = [];
+        map[day].push(trade);
+      }
+    });
+    return map;
+  }, [trades, currentMonth, currentYear]);
+
+  const selectedDayTrades = selectedDay ? tradesByDay[selectedDay] || [] : [];
 
   useEffect(() => {
     fetchTrades();
@@ -224,7 +248,7 @@ const Analysis = () => {
           </div>
           <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
             <button className="text-gray-400 hover:text-white">&lt;</button>
-            <span className="font-bold text-white min-w-[100px] text-center">May 2026</span>
+            <span className="font-bold text-white min-w-[100px] text-center">{monthName}</span>
             <button className="text-gray-400 hover:text-white">&gt;</button>
           </div>
         </div>
@@ -236,17 +260,34 @@ const Analysis = () => {
               {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map(d => (
                 <div key={d} className="text-center text-[10px] font-bold text-gray-500 py-2">{d}</div>
               ))}
-              {/* Empty slots for start of month */}
-              <div className="aspect-square"></div>
-              <div className="aspect-square"></div>
-              <div className="aspect-square"></div>
-              <div className="aspect-square"></div>
+              {Array.from({ length: emptyDays }).map((_, i) => (
+                <div key={`empty-${i}`} className="aspect-square"></div>
+              ))}
               
-              {Array.from({ length: 31 }, (_, i) => {
+              {Array.from({ length: daysInMonth }, (_, i) => {
                 const day = i + 1;
+                const dayTrades = tradesByDay[day] || [];
+                const dayPnl = dayTrades.reduce((sum, t) => sum + t.pnl, 0);
+                let bgClass = "bg-white/5 border border-white/5 hover:bg-white/10 cursor-pointer";
+                let textClass = "text-gray-600";
+                
+                if (dayTrades.length > 0) {
+                  bgClass = dayPnl >= 0 ? "bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 cursor-pointer" : "bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 cursor-pointer";
+                  textClass = dayPnl >= 0 ? "text-green-400" : "text-red-400";
+                }
+                
+                if (selectedDay === day) {
+                  bgClass += " ring-2 ring-yellow-500 ring-offset-2 ring-offset-[#111827]";
+                }
+
                 return (
-                  <div key={day} className="aspect-square rounded-xl flex flex-col items-center justify-center p-2 bg-white/5 border border-white/5">
-                    <span className="text-sm font-bold text-gray-600">{day}</span>
+                  <div 
+                    key={day} 
+                    onClick={() => setSelectedDay(day)}
+                    className={`aspect-square rounded-xl flex flex-col items-center justify-center p-2 transition-all ${bgClass}`}
+                  >
+                    <span className={`text-sm font-bold ${textClass}`}>{day}</span>
+                    {dayTrades.length > 0 && <span className={`text-[10px] font-bold mt-1 ${textClass}`}>{dayPnl >= 0 ? '+' : '-'}${Math.abs(dayPnl).toFixed(0)}</span>}
                   </div>
                 )
               })}
@@ -254,10 +295,42 @@ const Analysis = () => {
           </div>
           
           {/* Day Detail Sidebar */}
-          <div className="w-full lg:w-72 bg-white/5 rounded-xl border border-white/5 p-6 flex flex-col items-center justify-center text-center">
-             <Calendar size={48} className="text-gray-600 mb-4" />
-             <h4 className="font-bold text-white mb-2">Day Trades</h4>
-             <p className="text-xs text-gray-500">Click on a day with trades in the calendar to view details here.</p>
+          <div className="w-full lg:w-72 bg-white/5 rounded-xl border border-white/5 p-6 flex flex-col custom-scrollbar overflow-y-auto max-h-[400px]">
+             {selectedDay ? (
+               selectedDayTrades.length > 0 ? (
+                 <>
+                   <h4 className="font-bold text-white mb-4">Trades on {monthName.split(' ')[0]} {selectedDay}</h4>
+                   <div className="space-y-3 w-full">
+                     {selectedDayTrades.map(t => (
+                       <div key={t._id} className="bg-black/40 p-3 rounded-xl border border-white/10 w-full text-left">
+                         <div className="flex justify-between items-center mb-1">
+                           <span className="font-bold text-white">{t.symbol}</span>
+                           <span className={`text-sm font-bold ${t.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                             {t.pnl >= 0 ? '+' : '-'}${Math.abs(t.pnl).toFixed(2)}
+                           </span>
+                         </div>
+                         <div className="text-xs text-gray-400 flex justify-between">
+                           <span>{t.type}</span>
+                           <span className={t.status === 'Journaled' ? 'text-blue-400' : 'text-gray-500'}>{t.status}</span>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 </>
+               ) : (
+                 <div className="flex flex-col items-center justify-center h-full text-center m-auto">
+                   <Calendar size={48} className="text-gray-600 mb-4" />
+                   <h4 className="font-bold text-white mb-2">No Trades</h4>
+                   <p className="text-xs text-gray-500">You didn't log any trades on this day.</p>
+                 </div>
+               )
+             ) : (
+               <div className="flex flex-col items-center justify-center h-full text-center m-auto">
+                 <Calendar size={48} className="text-gray-600 mb-4" />
+                 <h4 className="font-bold text-white mb-2">Day Trades</h4>
+                 <p className="text-xs text-gray-500">Click on a day with trades in the calendar to view details here.</p>
+               </div>
+             )}
           </div>
         </div>
       </div>
