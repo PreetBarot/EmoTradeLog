@@ -12,6 +12,17 @@ export const calculateTradeStats = (trades) => {
       bestTrade: 0,
       worstTrade: 0,
       expectancy: 0,
+      maxWinStreak: 0,
+      maxLossStreak: 0,
+      totalTradingDays: 0,
+      winningDays: 0,
+      losingDays: 0,
+      breakevenDays: 0,
+      avgDailyPnl: 0,
+      avgWinningDayPnl: 0,
+      avgLosingDayPnl: 0,
+      largestProfitableDay: 0,
+      largestLosingDay: 0,
     };
   }
 
@@ -26,21 +37,69 @@ export const calculateTradeStats = (trades) => {
   let losses = 0;
   let bestTrade = 0;
   let worstTrade = 0;
+  let currentWinStreak = 0;
+  let currentLossStreak = 0;
+  let maxWinStreak = 0;
+  let maxLossStreak = 0;
 
-  closedTrades.forEach(trade => {
+  const dailyPnL = {};
+
+  const sortedTrades = [...closedTrades].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  sortedTrades.forEach(trade => {
     const pnl = Number(trade.pnl);
     totalPnl += pnl;
+
+    const dateStr = new Date(trade.date).toDateString();
+    if (!dailyPnL[dateStr]) dailyPnL[dateStr] = 0;
+    dailyPnL[dateStr] += pnl;
 
     if (pnl > 0) {
       grossProfit += pnl;
       wins += 1;
       if (pnl > bestTrade) bestTrade = pnl;
+      currentWinStreak += 1;
+      currentLossStreak = 0;
+      if (currentWinStreak > maxWinStreak) maxWinStreak = currentWinStreak;
     } else if (pnl < 0) {
       grossLoss += pnl;
       losses += 1;
       if (pnl < worstTrade) worstTrade = pnl;
+      currentLossStreak += 1;
+      currentWinStreak = 0;
+      if (currentLossStreak > maxLossStreak) maxLossStreak = currentLossStreak;
+    } else {
+      currentWinStreak = 0;
+      currentLossStreak = 0;
     }
   });
+
+  const totalTradingDays = Object.keys(dailyPnL).length;
+  let winningDays = 0;
+  let losingDays = 0;
+  let breakevenDays = 0;
+  let largestProfitableDay = 0;
+  let largestLosingDay = 0;
+  let grossWinningDayPnl = 0;
+  let grossLosingDayPnl = 0;
+
+  Object.values(dailyPnL).forEach(dpnl => {
+    if (dpnl > 0) {
+      winningDays += 1;
+      grossWinningDayPnl += dpnl;
+      if (dpnl > largestProfitableDay) largestProfitableDay = dpnl;
+    } else if (dpnl < 0) {
+      losingDays += 1;
+      grossLosingDayPnl += dpnl;
+      if (dpnl < largestLosingDay) largestLosingDay = dpnl;
+    } else {
+      breakevenDays += 1;
+    }
+  });
+
+  const avgWinningDayPnl = winningDays > 0 ? grossWinningDayPnl / winningDays : 0;
+  const avgLosingDayPnl = losingDays > 0 ? grossLosingDayPnl / losingDays : 0;
+  const avgDailyPnl = totalTradingDays > 0 ? totalPnl / totalTradingDays : 0;
 
   const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
   const profitFactor = grossLoss !== 0 ? Math.abs(grossProfit / grossLoss) : (grossProfit > 0 ? grossProfit : 0);
@@ -60,5 +119,16 @@ export const calculateTradeStats = (trades) => {
     bestTrade,
     worstTrade,
     expectancy,
+    maxWinStreak,
+    maxLossStreak,
+    totalTradingDays,
+    winningDays,
+    losingDays,
+    breakevenDays,
+    avgDailyPnl,
+    avgWinningDayPnl,
+    avgLosingDayPnl,
+    largestProfitableDay,
+    largestLosingDay,
   };
 };

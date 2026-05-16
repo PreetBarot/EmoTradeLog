@@ -143,19 +143,19 @@ const Analysis = () => {
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Win Streak</span>
-              <span className="text-lg font-bold text-white">-</span>
+              <span className="text-lg font-bold text-green-400">{stats.maxWinStreak}</span>
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Loss Streak</span>
-              <span className="text-lg font-bold text-white">-</span>
+              <span className="text-lg font-bold text-red-400">{stats.maxLossStreak}</span>
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Risk:Reward</span>
-              <span className="text-lg font-bold text-yellow-500">-</span>
+              <span className="text-lg font-bold text-gray-500">N/A</span>
             </div>
             <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-              <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Open Trades</span>
-              <span className="text-lg font-bold text-white">-</span>
+              <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Trading Days</span>
+              <span className="text-lg font-bold text-white">{stats.totalTradingDays}</span>
             </div>
           </div>
         </div>
@@ -352,26 +352,26 @@ const Analysis = () => {
           </div>
           <div className="bg-white/5 p-4 rounded-xl border border-white/5">
             <span className="block text-[10px] font-bold text-gray-500 uppercase mb-2">AVERAGE per Month</span>
-            <div className="font-bold text-gray-500 text-xl">$0.00</div>
+            <div className="font-bold text-gray-300 text-xl">${stats.totalPnl.toFixed(2)}</div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-0 text-sm">
           {[
-            ['Total P&L', '$0.00', 'text-gray-400 font-bold'],
-            ['Average daily volume', '0', 'font-bold text-gray-400'],
-            ['Average winning trade', '$0.00', 'text-gray-400 font-bold'],
-            ['Average losing trade', '$0.00', 'text-gray-400 font-bold'],
-            ['Total number of trades', '0', 'font-bold text-gray-400'],
-            ['Number of winning trades', '0', 'font-bold text-gray-400'],
-            ['Number of losing trades', '0', 'font-bold text-gray-400'],
-            ['Max consecutive wins', '0', 'font-bold text-gray-400'],
-            ['Max consecutive losses', '0', 'font-bold text-gray-400'],
-            ['Total commissions', '$0.00', 'font-bold text-gray-400'],
-            ['Total swap', '$0.00', 'font-bold text-gray-400'],
-            ['Largest profit', '$0.00', 'text-gray-400 font-bold'],
-            ['Largest loss', '$0.00', 'text-gray-400 font-bold'],
-            ['Avg hold time (Winners)', '-', 'font-bold text-gray-400'],
+            ['Total P&L', `$${stats.totalPnl.toFixed(2)}`, stats.totalPnl >= 0 ? 'text-green-400 font-bold' : 'text-red-400 font-bold'],
+            ['Average daily volume', 'N/A', 'font-bold text-gray-500'],
+            ['Average winning trade', `$${stats.avgWinner.toFixed(2)}`, 'text-green-400 font-bold'],
+            ['Average losing trade', `$${stats.avgLoser.toFixed(2)}`, 'text-red-400 font-bold'],
+            ['Total number of trades', stats.totalTrades.toString(), 'font-bold text-white'],
+            ['Number of winning trades', stats.wins.toString(), 'font-bold text-green-400'],
+            ['Number of losing trades', stats.losses.toString(), 'font-bold text-red-400'],
+            ['Max consecutive wins', stats.maxWinStreak.toString(), 'font-bold text-green-400'],
+            ['Max consecutive losses', stats.maxLossStreak.toString(), 'font-bold text-red-400'],
+            ['Total commissions', 'N/A', 'font-bold text-gray-500'],
+            ['Total swap', 'N/A', 'font-bold text-gray-500'],
+            ['Largest profit', `$${stats.bestTrade.toFixed(2)}`, 'text-green-400 font-bold'],
+            ['Largest loss', `$${stats.worstTrade.toFixed(2)}`, 'text-red-400 font-bold'],
+            ['Avg hold time (Winners)', 'N/A', 'font-bold text-gray-500'],
           ].map((stat, i) => (
             <div key={i} className="flex justify-between items-center py-3 border-b border-white/5">
               <span className="text-gray-400">{stat[0]}</span>
@@ -380,20 +380,20 @@ const Analysis = () => {
           ))}
 
           {[
-            ['Open trades', '0', 'font-bold text-gray-400'],
-            ['Total trading days', '0', 'font-bold text-gray-400'],
-            ['Winning days', '0', 'font-bold text-gray-400'],
-            ['Losing days', '0', 'font-bold text-gray-400'],
-            ['Breakeven days', '0', 'font-bold text-gray-400'],
-            ['Average daily P&L', '$0.00', 'text-gray-400 font-bold'],
-            ['Average winning day P&L', '$0.00', 'text-gray-400 font-bold'],
-            ['Average losing day P&L', '$0.00', 'text-gray-400 font-bold'],
-            ['Largest profitable day', '$0.00', 'text-gray-400 font-bold'],
-            ['Largest losing day', '$0.00', 'text-gray-400 font-bold'],
-            ['Trade expectancy', '$0.00', 'text-gray-400 font-bold'],
-            ['Max drawdown', '$0.00', 'text-gray-400 font-bold'],
-            ['Max drawdown %', '0.0%', 'text-gray-400 font-bold'],
-            ['Avg hold time (Losers)', '-', 'font-bold text-gray-400'],
+            ['Open trades', '0', 'font-bold text-gray-500'],
+            ['Total trading days', stats.totalTradingDays.toString(), 'font-bold text-white'],
+            ['Winning days', stats.winningDays.toString(), 'font-bold text-green-400'],
+            ['Losing days', stats.losingDays.toString(), 'font-bold text-red-400'],
+            ['Breakeven days', stats.breakevenDays.toString(), 'font-bold text-gray-400'],
+            ['Average daily P&L', `$${stats.avgDailyPnl.toFixed(2)}`, stats.avgDailyPnl >= 0 ? 'text-green-400 font-bold' : 'text-red-400 font-bold'],
+            ['Average winning day P&L', `$${stats.avgWinningDayPnl.toFixed(2)}`, 'text-green-400 font-bold'],
+            ['Average losing day P&L', `$${stats.avgLosingDayPnl.toFixed(2)}`, 'text-red-400 font-bold'],
+            ['Largest profitable day', `$${stats.largestProfitableDay.toFixed(2)}`, 'text-green-400 font-bold'],
+            ['Largest losing day', `$${stats.largestLosingDay.toFixed(2)}`, 'text-red-400 font-bold'],
+            ['Trade expectancy', `$${stats.expectancy.toFixed(2)}`, stats.expectancy >= 0 ? 'text-green-400 font-bold' : 'text-red-400 font-bold'],
+            ['Max drawdown', 'N/A', 'text-gray-500 font-bold'],
+            ['Max drawdown %', 'N/A', 'text-gray-500 font-bold'],
+            ['Avg hold time (Losers)', 'N/A', 'font-bold text-gray-500'],
           ].map((stat, i) => (
             <div key={i} className="flex justify-between items-center py-3 border-b border-white/5">
               <span className="text-gray-400">{stat[0]}</span>
