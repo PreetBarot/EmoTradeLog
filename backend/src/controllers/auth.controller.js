@@ -1,4 +1,3 @@
-
 import User from "../models/User.model.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -11,58 +10,126 @@ const isValidEmail = (email) => /^\S+@\S+\.\S+$/.test(email);
 
 const generateToken = (userId) => {
   const jwtSecret = process.env.JWT_SECRET;
+
   if (!jwtSecret) {
     throw new Error("JWT_SECRET is not configured");
   }
 
-  return jwt.sign({ id: userId }, jwtSecret, { expiresIn: "7d" });
+  return jwt.sign(
+    { id: userId },
+    jwtSecret,
+    { expiresIn: "7d" }
+  );
 };
 
 export const sendOtp = async (req, res) => {
   try {
+
     const { email } = req.body;
+
     if (!email || !isValidEmail(email)) {
-      return res.status(400).json({ success: false, message: "Valid email is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Valid email is required",
+      });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const existingUser = await User.findOne({ email: normalizedEmail });
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: "Email already registered" });
-    }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    await Otp.deleteMany({ email: normalizedEmail }); // Clear previous OTPs
-    await Otp.create({ email: normalizedEmail, otp });
-
-    const message = `Your EmoTradeLog verification code is: ${otp}\n\nThis code will expire in 5 minutes.`;
-    await sendEmail({
+    const existingUser = await User.findOne({
       email: normalizedEmail,
-      subject: "EmoTradeLog - Email Verification",
-      message,
     });
-    
-    // For local dev without email configured, print it to console
-    if (!process.env.EMAIL_HOST) {
-      console.log(`[DEV OTP] for ${normalizedEmail}: ${otp}`);
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered",
+      });
     }
 
-    res.status(200).json({ success: true, message: "OTP sent successfully" });
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
+    // Delete old OTPs
+    await Otp.deleteMany({
+      email: normalizedEmail,
+    });
+
+    // Save new OTP
+    await Otp.create({
+      email: normalizedEmail,
+      otp,
+    });
+
+    const message =
+      `Your EmoTradeLog verification code is: ${otp}\n\n` +
+      `This code will expire in 5 minutes.`;
+
+    // Send Email
+    try {
+
+      await sendEmail({
+        email: normalizedEmail,
+        subject: "EmoTradeLog - Email Verification",
+        message,
+      });
+
+    } catch (emailError) {
+
+      console.error(
+        "[EMAIL ERROR]",
+        emailError
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send OTP email",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent successfully",
+    });
+
   } catch (error) {
-    console.error("[AUTH] sendOtp error:", error);
-    res.status(500).json({ success: false, message: "Failed to send OTP" });
+
+    console.error(
+      "[AUTH] sendOtp error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send OTP",
+    });
   }
 };
 
 export const registerUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, investorPassword, otp } = req.body;
 
-    if (!firstName || !lastName || !email || !password || !otp) {
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      investorPassword,
+      otp,
+    } = req.body;
+
+    if (
+      !firstName ||
+      !lastName ||
+      !email ||
+      !password ||
+      !otp
+    ) {
       return res.status(400).json({
         success: false,
-        message: "All fields including OTP are required",
+        message:
+          "All fields including OTP are required",
       });
     }
 
@@ -76,13 +143,18 @@ export const registerUser = async (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 6 characters",
+        message:
+          "Password must be at least 6 characters",
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail =
+      email.toLowerCase().trim();
 
-    const existingUser = await User.findOne({ email: normalizedEmail });
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
+
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -90,7 +162,11 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    const validOtp = await Otp.findOne({ email: normalizedEmail, otp });
+    const validOtp = await Otp.findOne({
+      email: normalizedEmail,
+      otp,
+    });
+
     if (!validOtp) {
       return res.status(400).json({
         success: false,
@@ -101,15 +177,24 @@ export const registerUser = async (req, res) => {
     // Generate unique API key
     let apiKey;
     let apiKeyExists = true;
+
     while (apiKeyExists) {
-      apiKey = crypto.randomBytes(32).toString("hex");
-      apiKeyExists = await User.findOne({ apiKey });
+
+      apiKey = crypto
+        .randomBytes(32)
+        .toString("hex");
+
+      apiKeyExists = await User.findOne({
+        apiKey,
+      });
     }
 
+    let encryptedInvestorPassword =
+      undefined;
 
-    let encryptedInvestorPassword = undefined;
     if (investorPassword) {
-      encryptedInvestorPassword = encrypt(investorPassword);
+      encryptedInvestorPassword =
+        encrypt(investorPassword);
     }
 
     const user = await User.create({
@@ -118,14 +203,23 @@ export const registerUser = async (req, res) => {
       email: normalizedEmail,
       password,
       apiKey,
-      ...(encryptedInvestorPassword && { investorPassword: encryptedInvestorPassword }),
+
+      ...(encryptedInvestorPassword && {
+        investorPassword:
+          encryptedInvestorPassword,
+      }),
     });
 
-    await Otp.deleteMany({ email: normalizedEmail });
+    // Delete OTP after registration
+    await Otp.deleteMany({
+      email: normalizedEmail,
+    });
 
     return res.status(201).json({
       success: true,
-      message: "User registered successfully",
+      message:
+        "User registered successfully",
+
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -134,10 +228,14 @@ export const registerUser = async (req, res) => {
         apiKey: user.apiKey,
       },
     });
-  } catch (error) {
-    console.error("[AUTH] registerUser error:", error.message);
 
-    // Handles duplicate key race condition if two requests pass pre-check simultaneously.
+  } catch (error) {
+
+    console.error(
+      "[AUTH] registerUser error:",
+      error
+    );
+
     if (error?.code === 11000) {
       return res.status(400).json({
         success: false,
@@ -154,16 +252,20 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
+
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message:
+          "Email and password are required",
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail =
+      email.toLowerCase().trim();
+
     if (!isValidEmail(normalizedEmail)) {
       return res.status(400).json({
         success: false,
@@ -171,7 +273,10 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: normalizedEmail });
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -179,7 +284,12 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid =
+      await bcrypt.compare(
+        password,
+        user.password
+      );
+
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -187,12 +297,15 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const token = generateToken(user._id.toString());
+    const token = generateToken(
+      user._id.toString()
+    );
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
       token,
+
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -201,8 +314,13 @@ export const loginUser = async (req, res) => {
         apiKey: user.apiKey,
       },
     });
+
   } catch (error) {
-    console.error("[AUTH] loginUser error:", error.message);
+
+    console.error(
+      "[AUTH] loginUser error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
