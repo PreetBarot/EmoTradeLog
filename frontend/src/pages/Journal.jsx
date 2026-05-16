@@ -344,11 +344,14 @@ const Journal = () => {
                   <ImagePlus size={14} className="text-blue-400" /> Screenshots
                 </label>
                 <div className="flex flex-wrap gap-4 mt-2">
-                  {formData.screenshots?.map((url, i) => (
-                    <div key={i} className="relative w-32 h-32 border border-white/10 rounded-xl overflow-hidden">
-                      <img src={`${import.meta.env.VITE_API_URL || ''}${url}`} alt="trade" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
+                  {formData.screenshots?.map((url, i) => {
+                    const imgSrc = url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL || ''}${url}`;
+                    return (
+                      <div key={i} className="relative w-32 h-32 border border-white/10 rounded-xl overflow-hidden">
+                        <img src={imgSrc} alt="trade" className="w-full h-full object-cover" />
+                      </div>
+                    );
+                  })}
                   <label className="w-32 h-32 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-yellow-500/50 hover:bg-white/5 transition-colors text-gray-400 group cursor-pointer relative overflow-hidden">
                     {isUploading ? (
                       <span className="text-sm font-medium">Uploading...</span>
