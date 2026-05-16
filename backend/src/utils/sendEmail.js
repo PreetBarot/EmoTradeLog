@@ -1,45 +1,57 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async (options) => {
-  // Use simple setup or ethereal email if not configured
-  let transporter;
-  if (process.env.EMAIL_HOST) {
-    transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-  } else {
-    // Fallback to ethereal for testing or simple dummy logging
-    transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      auth: {
-        user: 'dummy@ethereal.email',
-        pass: 'dummy',
-      },
-    });
-  }
-
-  const message = {
-    from: `${process.env.FROM_NAME || 'EmoTradeLog'} <${process.env.FROM_EMAIL || 'noreply@emotradelog.com'}>`,
-    to: options.email,
-    subject: options.subject,
-    text: options.message,
-  };
 
   try {
-    const info = await transporter.sendMail(message);
-    console.log('Email sent: %s', info.messageId);
-    if (!process.env.EMAIL_HOST) {
-      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-    }
+
+    const response = await resend.emails.send({
+
+      from: 'EmoTradeLog <onboarding@resend.dev>',
+
+      to: options.email,
+
+      subject: options.subject,
+
+      html: `
+        <div style="
+          font-family: Arial;
+          padding: 20px;
+          background: #111827;
+          color: white;
+          border-radius: 10px;
+        ">
+
+          <h2 style="color:#facc15;">
+            EmoTradeLog Verification
+          </h2>
+
+          <p>Your OTP code is:</p>
+
+          <div style="
+            font-size: 40px;
+            font-weight: bold;
+            margin: 20px 0;
+            color:#facc15;
+            letter-spacing: 5px;
+          ">
+            ${options.message.match(/\d+/)?.[0] || ''}
+          </div>
+
+          <p>This OTP expires in 5 minutes.</p>
+
+        </div>
+      `,
+    });
+
+    console.log(response);
+
   } catch (error) {
-    console.error('Email sending error:', error);
-    // Continue even if email fails, so we can test with hardcoded OTP for development
+
+    console.error('Resend Email Error:', error);
+
+    throw error;
   }
 };
 
