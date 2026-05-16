@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, Activity, Target, Zap, Brain, Flame, Lock, Unlock, Inbox } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Activity, Target, Zap, Brain, Flame, DollarSign, TrendingUp, Inbox } from 'lucide-react';
 
 import useTradeStore from '../store/useTradeStore';
 import { useEffect, useMemo } from 'react';
@@ -51,16 +51,15 @@ const Dashboard = () => {
     fetchTrades();
   }, [fetchTrades]);
 
-  const journaledTrades = useMemo(() => trades.filter(t => t.status === 'Journaled'), [trades]);
-  const stats = useMemo(() => calculateTradeStats(journaledTrades), [journaledTrades]);
-  const recentTrades = journaledTrades.slice(0, 5);
+  const stats = useMemo(() => calculateTradeStats(trades), [trades]);
+  const recentTrades = trades.slice(0, 5);
 
   return (
     <div className="space-y-6 pb-12">
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Realized P&L" value={`$${stats.totalPnl.toFixed(2)}`} subtext="-" trend={stats.totalPnl >= 0 ? "up" : "down"} icon={<Lock size={48} />} delay={0.1} />
-        <StatCard title="Unrealized P&L" value="$0.00" subtext="-" trend="up" icon={<Unlock size={48} />} delay={0.2} />
+        <StatCard title="Realized P&L" value={`$${stats.totalPnl.toFixed(2)}`} subtext="-" trend={stats.totalPnl >= 0 ? "up" : "down"} icon={<DollarSign size={48} />} delay={0.1} />
+        <StatCard title="Unrealized P&L" value="$0.00" subtext="-" trend="up" icon={<TrendingUp size={48} />} delay={0.2} />
         <StatCard title="Win Rate" value={`${stats.winRate.toFixed(1)}%`} subtext="-" trend={stats.winRate >= 50 ? "up" : "down"} icon={<Target size={48} />} delay={0.3} />
         <StatCard title="Profit Factor" value={stats.profitFactor.toFixed(2)} subtext="-" trend={stats.profitFactor >= 1 ? "up" : "down"} icon={<Zap size={48} />} delay={0.4} />
       </div>

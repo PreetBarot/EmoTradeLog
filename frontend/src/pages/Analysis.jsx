@@ -19,8 +19,7 @@ const Analysis = () => {
     fetchTrades();
   }, [fetchTrades]);
 
-  const journaledTrades = useMemo(() => trades.filter(t => t.status === 'Journaled'), [trades]);
-  const stats = useMemo(() => calculateTradeStats(journaledTrades), [journaledTrades]);
+  const stats = useMemo(() => calculateTradeStats(trades), [trades]);
 
   return (
     <div className="space-y-6 pb-12">
