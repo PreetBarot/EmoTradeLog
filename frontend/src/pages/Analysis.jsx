@@ -342,17 +342,17 @@ const Analysis = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-white/5 p-4 rounded-xl border border-white/5">
             <span className="block text-[10px] font-bold text-gray-500 uppercase mb-2">BEST MONTH</span>
-            <div className="font-bold text-white text-xl">N/A</div>
-            <span className="text-gray-500 text-xs font-bold">$0.00</span>
+            <div className="font-bold text-white text-xl uppercase">{stats.bestMonth.name}</div>
+            <span className={`text-xs font-bold ${stats.bestMonth.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>${stats.bestMonth.pnl.toFixed(2)}</span>
           </div>
           <div className="bg-white/5 p-4 rounded-xl border border-white/5">
             <span className="block text-[10px] font-bold text-gray-500 uppercase mb-2">WORST MONTH</span>
-            <div className="font-bold text-white text-xl">N/A</div>
-            <span className="text-gray-500 text-xs font-bold">$0.00</span>
+            <div className="font-bold text-white text-xl uppercase">{stats.worstMonth.name}</div>
+            <span className={`text-xs font-bold ${stats.worstMonth.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>${stats.worstMonth.pnl.toFixed(2)}</span>
           </div>
           <div className="bg-white/5 p-4 rounded-xl border border-white/5">
             <span className="block text-[10px] font-bold text-gray-500 uppercase mb-2">AVERAGE per Month</span>
-            <div className="font-bold text-gray-300 text-xl">${stats.totalPnl.toFixed(2)}</div>
+            <div className={`font-bold text-xl ${stats.avgMonthlyPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>${stats.avgMonthlyPnl.toFixed(2)}</div>
           </div>
         </div>
 

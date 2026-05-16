@@ -23,6 +23,9 @@ export const calculateTradeStats = (trades) => {
       avgLosingDayPnl: 0,
       largestProfitableDay: 0,
       largestLosingDay: 0,
+      bestMonth: { name: 'N/A', pnl: 0 },
+      worstMonth: { name: 'N/A', pnl: 0 },
+      avgMonthlyPnl: 0,
     };
   }
 
@@ -43,6 +46,7 @@ export const calculateTradeStats = (trades) => {
   let maxLossStreak = 0;
 
   const dailyPnL = {};
+  const monthlyPnL = {};
 
   const sortedTrades = [...closedTrades].sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -50,9 +54,14 @@ export const calculateTradeStats = (trades) => {
     const pnl = Number(trade.pnl);
     totalPnl += pnl;
 
-    const dateStr = new Date(trade.date).toDateString();
+    const date = new Date(trade.date);
+    const dateStr = date.toDateString();
     if (!dailyPnL[dateStr]) dailyPnL[dateStr] = 0;
     dailyPnL[dateStr] += pnl;
+
+    const monthStr = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+    if (!monthlyPnL[monthStr]) monthlyPnL[monthStr] = 0;
+    monthlyPnL[monthStr] += pnl;
 
     if (pnl > 0) {
       grossProfit += pnl;
@@ -101,6 +110,19 @@ export const calculateTradeStats = (trades) => {
   const avgLosingDayPnl = losingDays > 0 ? grossLosingDayPnl / losingDays : 0;
   const avgDailyPnl = totalTradingDays > 0 ? totalPnl / totalTradingDays : 0;
 
+  let bestMonth = { name: 'N/A', pnl: 0 };
+  let worstMonth = { name: 'N/A', pnl: 0 };
+  const months = Object.keys(monthlyPnL);
+  if (months.length > 0) {
+    bestMonth = { name: months[0], pnl: monthlyPnL[months[0]] };
+    worstMonth = { name: months[0], pnl: monthlyPnL[months[0]] };
+    for (let m of months) {
+      if (monthlyPnL[m] > bestMonth.pnl) bestMonth = { name: m, pnl: monthlyPnL[m] };
+      if (monthlyPnL[m] < worstMonth.pnl) worstMonth = { name: m, pnl: monthlyPnL[m] };
+    }
+  }
+  const avgMonthlyPnl = months.length > 0 ? totalPnl / months.length : 0;
+
   const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
   const profitFactor = grossLoss !== 0 ? Math.abs(grossProfit / grossLoss) : (grossProfit > 0 ? grossProfit : 0);
   const avgWinner = wins > 0 ? grossProfit / wins : 0;
@@ -130,5 +152,8 @@ export const calculateTradeStats = (trades) => {
     avgLosingDayPnl,
     largestProfitableDay,
     largestLosingDay,
+    bestMonth,
+    worstMonth,
+    avgMonthlyPnl,
   };
 };
