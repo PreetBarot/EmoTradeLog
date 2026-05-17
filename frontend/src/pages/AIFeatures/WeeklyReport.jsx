@@ -9,7 +9,8 @@ const WeeklyReport = () => {
   useEffect(() => {
     const fetchWeeklyReport = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const userInfo = localStorage.getItem('userInfo');
+        const token = userInfo ? JSON.parse(userInfo).token : null;
         const API_URL = import.meta.env.VITE_API_URL || '';
         const response = await fetch(`${API_URL}/api/ai/weekly-report`, {
           headers: {
