@@ -1,5 +1,5 @@
 import Trade from '../models/Trade.js';
-import User from '../models/User.js';
+import User from '../models/User.model.js';
 
 export const getLeaderboard = async (req, res) => {
   try {
