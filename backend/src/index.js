@@ -8,6 +8,7 @@ import tradeRoutes from './routes/tradeRoutes.js';
 import mt5Routes from './routes/mt5Routes.js';
 import investorPasswordRoutes from './routes/investorPasswordRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -35,6 +36,7 @@ app.use('/api/trades', tradeRoutes);
 app.use('/api/mt5', mt5Routes);
 app.use('/api/investor-password', investorPasswordRoutes); // Protect this route in production!
 app.use('/api/upload', uploadRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 

@@ -27,6 +27,7 @@ const Journal = () => {
         lessonsLearned: selectedTrade.lessonsLearned || '',
         tags: selectedTrade.tags ? selectedTrade.tags.join(', ') : '',
         screenshots: selectedTrade.screenshots || [],
+        checklist: selectedTrade.checklist || [],
       });
       setRating(selectedTrade.rating || 5);
     }
@@ -51,6 +52,7 @@ const Journal = () => {
         tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
         rating: Number(rating),
         screenshots: formData.screenshots,
+        checklist: formData.checklist,
       });
       alert('Trade journal saved!');
       setSelectedTrade(prev => ({...prev, status: 'Journaled'}));
@@ -93,6 +95,17 @@ const Journal = () => {
     'Key levels identified',
     'Economic calendar checked'
   ];
+
+  const handleToggleChecklist = (item) => {
+    setFormData(prev => {
+      const currentList = prev.checklist || [];
+      if (currentList.includes(item)) {
+        return { ...prev, checklist: currentList.filter(i => i !== item) };
+      } else {
+        return { ...prev, checklist: [...currentList, item] };
+      }
+    });
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8rem)]">
@@ -347,17 +360,32 @@ const Journal = () => {
                   <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
                     <CheckSquare size={14} className="text-blue-400" /> Execution Checklist
                   </label>
-                  <span className="text-xs font-bold text-gray-500">0/5</span>
+                  <span className="text-xs font-bold text-gray-500">{(formData.checklist || []).length}/{checklistItems.length}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {checklistItems.map((item, i) => (
-                    <label key={i} className="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors group">
-                      <div className="w-5 h-5 rounded border border-gray-600 flex items-center justify-center group-hover:border-yellow-500/50 transition-colors">
-                        {/* Add check icon when selected */}
-                      </div>
-                      <span className="text-sm text-gray-300 select-none">{item}</span>
-                    </label>
-                  ))}
+                  {checklistItems.map((item, i) => {
+                    const isChecked = (formData.checklist || []).includes(item);
+                    return (
+                      <label key={i} className="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors group">
+                        <div className="relative flex items-center justify-center">
+                          <input 
+                            type="checkbox" 
+                            className="absolute opacity-0 cursor-pointer w-0 h-0" 
+                            checked={isChecked}
+                            onChange={() => handleToggleChecklist(item)}
+                          />
+                          <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isChecked ? 'bg-yellow-500 border-yellow-500' : 'border-gray-600 group-hover:border-yellow-500/50'}`}>
+                            {isChecked && (
+                              <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-sm text-gray-300 select-none">{item}</span>
+                      </label>
+                    );
+                  })}
                   <button className="flex items-center gap-3 p-3 border border-dashed border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-colors text-gray-400 text-sm">
                     <Plus size={16} /> Add custom item...
                   </button>
