@@ -6,7 +6,11 @@ import Chat from '../models/Chat.js';
 export const getNewsCorrelation = async (req, res) => {
   try {
     const { date } = req.query;
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    
+    let ai;
+    if (process.env.GEMINI_API_KEY) {
+      ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    }
     
     // Fetch this week's news from ForexFactory JSON API
     const response = await axios.get('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
