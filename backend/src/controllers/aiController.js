@@ -3,6 +3,12 @@ import { GoogleGenAI } from '@google/genai';
 import Trade from '../models/Trade.js';
 import Chat from '../models/Chat.js';
 
+let ffCache = {
+  data: null,
+  lastFetch: 0
+};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export const getNewsCorrelation = async (req, res) => {
   try {
     const { date } = req.query;
@@ -12,11 +18,18 @@ export const getNewsCorrelation = async (req, res) => {
       ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     }
     
-    // 1. Fetch News Data
+    // 1. Fetch News Data with Caching
     let dailyNews = [];
     try {
-      const response = await axios.get('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
-      const newsData = response.data;
+      let newsData;
+      if (ffCache.data && (Date.now() - ffCache.lastFetch < CACHE_DURATION)) {
+        newsData = ffCache.data;
+      } else {
+        const response = await axios.get('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
+        newsData = response.data;
+        ffCache.data = newsData;
+        ffCache.lastFetch = Date.now();
+      }
       
       const targetDateStr = date ? date : new Date().toISOString().split('T')[0];
       
