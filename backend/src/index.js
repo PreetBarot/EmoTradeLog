@@ -10,6 +10,7 @@ import investorPasswordRoutes from './routes/investorPasswordRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import leaderboardRoutes from './routes/leaderboardRoutes.js';
+import communityRoutes from './routes/communityRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -39,6 +40,7 @@ app.use('/api/investor-password', investorPasswordRoutes); // Protect this route
 app.use('/api/upload', uploadRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/community', communityRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 
 app.get('/', (req, res) => {
