@@ -1,6 +1,6 @@
 import express from 'express';
 import { getNewsCorrelation, getWeeklyReport } from '../controllers/aiController.js';
-import { protect } from '../controllers/auth.controller.js'; // Ensure user is authenticated
+import { protect } from '../middleware/authMiddleware.js'; // Ensure user is authenticated
 
 const router = express.Router();
 
