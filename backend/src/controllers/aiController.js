@@ -12,58 +12,68 @@ export const getNewsCorrelation = async (req, res) => {
       ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     }
     
-    // Fetch this week's news from ForexFactory JSON API
-    const response = await axios.get('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
-    const newsData = response.data;
-    
-    // Filter news for the selected date (default to today)
-    const targetDateStr = date ? date : new Date().toISOString().split('T')[0];
-    
-    const dailyNews = newsData.filter(item => {
-      const itemDateStr = item.date.split('T')[0];
-      return itemDateStr === targetDateStr && item.country === 'USD';
-    });
-    
-    // Extract high/medium impact news for AI insight
-    const importantNews = dailyNews.filter(item => item.impact === 'High' || item.impact === 'Medium');
-    
-    // If no Gemini Key, return mock data along with real news
-    if (!process.env.GEMINI_API_KEY) {
-      return res.json({
-        dailyNews,
-        insight: "Historical data shows your win rate drops by 35% when trading within 15 minutes of High Impact news. You often exhibit signs of 'FOMO' during these volatile spikes.",
-        suggestedRule: "Close all active intraday positions 5 minutes before the news release."
+    // 1. Fetch News Data
+    let dailyNews = [];
+    try {
+      const response = await axios.get('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
+      const newsData = response.data;
+      
+      const targetDateStr = date ? date : new Date().toISOString().split('T')[0];
+      
+      dailyNews = newsData.filter(item => {
+        const itemDateStr = item.date.split('T')[0];
+        return itemDateStr === targetDateStr && item.country === 'USD';
+      });
+    } catch (ffError) {
+      console.error("Forex Factory API Error:", ffError);
+      return res.status(200).json({
+        dailyNews: [],
+        insight: "Could not fetch economic calendar data from the provider. Please try again later.",
+        suggestedRule: "N/A"
       });
     }
-
-    // Pass the important news to Gemini for insight
+    
+    // 2. Generate AI Insight
     let insight = "No major high or medium impact news for the selected date.";
     let suggestedRule = "Follow your standard trading plan and risk management.";
-
+    
+    const importantNews = dailyNews.filter(item => item.impact === 'High' || item.impact === 'Medium');
+    
     if (importantNews.length > 0) {
-      const prompt = `
-      You are an expert trading psychology and data correlation AI. 
-      The user is a day trader. Here is the important (High/Medium impact) news data for the selected date: ${JSON.stringify(importantNews)}
-      Provide a brief correlation insight (maximum 3 sentences) predicting how the user's emotions (like FOMO or anxiety) and win rate might be affected by these specific news releases based on typical retail trader behavior.
-      Also, provide a single, actionable "Suggested Rule" to mitigate risk during these news events.
-      Format your response EXACTLY as a JSON object:
-      {
-        "insight": "Your brief insight...",
-        "suggestedRule": "Your suggested rule..."
-      }
-      Ensure the output is valid JSON, do not wrap it in markdown code blocks.
-      `;
+      if (!process.env.GEMINI_API_KEY) {
+        insight = "Historical data shows your win rate drops by 35% when trading within 15 minutes of High Impact news. You often exhibit signs of 'FOMO' during these volatile spikes.";
+        suggestedRule = "Close all active intraday positions 5 minutes before the news release.";
+      } else {
+        try {
+          const prompt = `
+          You are an expert trading psychology and data correlation AI. 
+          The user is a day trader. Here is the important (High/Medium impact) news data for the selected date: ${JSON.stringify(importantNews)}
+          Provide a brief correlation insight (maximum 3 sentences) predicting how the user's emotions (like FOMO or anxiety) and win rate might be affected by these specific news releases based on typical retail trader behavior.
+          Also, provide a single, actionable "Suggested Rule" to mitigate risk during these news events.
+          Format your response EXACTLY as a JSON object:
+          {
+            "insight": "Your brief insight...",
+            "suggestedRule": "Your suggested rule..."
+          }
+          Ensure the output is valid JSON, do not wrap it in markdown code blocks.
+          `;
 
-      const result = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt,
-      });
-      
-      let textResult = result.text;
-      textResult = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsedResult = JSON.parse(textResult);
-      insight = parsedResult.insight;
-      suggestedRule = parsedResult.suggestedRule;
+          const result = await ai.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: prompt,
+          });
+          
+          let textResult = result.text;
+          textResult = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsedResult = JSON.parse(textResult);
+          insight = parsedResult.insight;
+          suggestedRule = parsedResult.suggestedRule;
+        } catch (aiError) {
+          console.error("Gemini API Error:", aiError);
+          insight = "Could not generate AI insight due to an API error (rate limit or connection issue). Please wait a few moments before switching dates again.";
+          suggestedRule = "Avoid trading during high-impact news if AI guidance is unavailable.";
+        }
+      }
     }
 
     res.status(200).json({
@@ -73,11 +83,11 @@ export const getNewsCorrelation = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error in getNewsCorrelation:", error);
+    console.error("Unexpected Error in getNewsCorrelation:", error);
     res.status(200).json({
       dailyNews: [],
-      insight: "Could not generate AI insight due to an API error. Please ensure your GEMINI_API_KEY is correctly configured.",
-      suggestedRule: "Check your API settings."
+      insight: "An unexpected error occurred. Please try again.",
+      suggestedRule: "Check your settings."
     });
   }
 };
