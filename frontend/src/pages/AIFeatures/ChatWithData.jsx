@@ -47,6 +47,28 @@ const ChatWithData = () => {
     fetchHistory();
   }, []);
 
+  const clearChat = async () => {
+    try {
+      const userInfo = localStorage.getItem('userInfo');
+      const token = userInfo ? JSON.parse(userInfo).token : null;
+      if (!token) return;
+
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      await fetch(`${API_URL}/api/ai/chat`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      setMessages([
+        { role: 'assistant', text: "Hi! I'm your AI trading assistant. Ask me anything about your trading data." }
+      ]);
+    } catch (error) {
+      console.error("Failed to clear chat:", error);
+    }
+  };
+
   const handleSend = async (messageText = input) => {
     if (!messageText.trim()) return;
     
