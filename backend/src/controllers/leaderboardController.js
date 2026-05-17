@@ -44,7 +44,7 @@ export const getLeaderboard = async (req, res) => {
       {
         $project: {
           _id: 1,
-          name: '$userDetails.name',
+          name: { $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName'] },
           totalPnl: 1,
           totalTrades: 1,
           winRate: {
