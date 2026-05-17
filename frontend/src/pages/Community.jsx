@@ -190,10 +190,21 @@ const Community = () => {
               const senderName = msg.user ? `${msg.user.firstName || ''} ${msg.user.lastName || ''}`.trim() || 'Anonymous' : 'Deleted User';
               
               return (
-                <div key={msg._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} group relative`}>
-                  <span className="text-xs text-gray-500 mb-1 ml-1 mr-1">
-                    {isMe ? 'You' : senderName} • {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                  </span>
+                <div key={msg._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                  <div className="flex items-center gap-2 mb-1 mr-1">
+                    {isMe && (
+                      <button 
+                        onClick={() => handleDeleteMessage(msg._id)}
+                        className="text-gray-500 hover:text-red-500 transition-colors p-1"
+                        title="Delete message"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                    <span className="text-xs text-gray-500">
+                      {isMe ? 'You' : senderName} • {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                  </div>
                   <div className={`relative p-3 max-w-[80%] rounded-2xl text-sm flex flex-col gap-2 ${
                     isMe 
                       ? 'bg-yellow-500/20 border border-yellow-500/30 text-white rounded-tr-none' 
@@ -205,16 +216,6 @@ const Community = () => {
                       </a>
                     )}
                     {msg.text && <span>{msg.text}</span>}
-                    
-                    {isMe && (
-                      <button 
-                        onClick={() => handleDeleteMessage(msg._id)}
-                        className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Delete message"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
                   </div>
                 </div>
               );
