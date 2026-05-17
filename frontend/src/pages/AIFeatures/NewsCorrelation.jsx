@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Newspaper, Calendar, Loader, Brain, AlertTriangle } from 'lucide-react';
+import { Newspaper, Calendar, Loader, Brain, AlertTriangle, Folder } from 'lucide-react';
 
 const NewsCorrelation = () => {
   const [newsData, setNewsData] = useState(null);
@@ -37,10 +37,10 @@ const NewsCorrelation = () => {
 
   const getImpactColor = (impact) => {
     switch(impact) {
-      case 'High': return 'bg-red-500';
-      case 'Medium': return 'bg-orange-500';
-      case 'Low': return 'bg-yellow-500';
-      default: return 'bg-gray-500';
+      case 'High': return 'text-red-500';
+      case 'Medium': return 'text-orange-500';
+      case 'Low': return 'text-yellow-500';
+      default: return 'text-gray-500';
     }
   };
 
@@ -103,7 +103,7 @@ const NewsCorrelation = () => {
                       </td>
                       <td className="py-3">
                         <div className="flex items-center gap-2">
-                           <span className={`w-3 h-3 rounded-full ${getImpactColor(newsItem.impact)}`}></span>
+                           <Folder className={`fill-current ${getImpactColor(newsItem.impact)}`} size={18} />
                            <span className="text-gray-400 text-xs hidden sm:inline">{newsItem.impact}</span>
                         </div>
                       </td>

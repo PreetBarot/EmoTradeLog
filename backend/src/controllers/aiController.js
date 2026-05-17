@@ -17,7 +17,7 @@ export const getNewsCorrelation = async (req, res) => {
     
     const dailyNews = newsData.filter(item => {
       const itemDateStr = item.date.split('T')[0];
-      return itemDateStr === targetDateStr;
+      return itemDateStr === targetDateStr && item.country === 'USD';
     });
     
     // Extract high/medium impact news for AI insight
