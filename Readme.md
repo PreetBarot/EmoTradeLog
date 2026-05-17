@@ -1,4 +1,4 @@
-# 🧠 EmoTradeLog — Full Project Documentation
+f# 🧠 EmoTradeLog — Full Project Documentation
 
 > **Stack:** MERN (MongoDB, Express, React, Node.js) | **AI:** LangChain + RAG + LLMs | **Target:** Full-Stack AI SaaS Trading Journal
 

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send, Sparkles, Loader } from 'lucide-react';
+import { MessageSquare, Send, Sparkles, Loader, Trash2 } from 'lucide-react';
 
 const ChatWithData = () => {
   const [input, setInput] = useState('');
@@ -7,6 +7,7 @@ const ChatWithData = () => {
     { role: 'assistant', text: "Hi! I'm your AI trading assistant. Ask me anything about your trading data." }
   ]);
   const [loading, setLoading] = useState(false);
+  const [fetchingHistory, setFetchingHistory] = useState(true);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -16,6 +17,35 @@ const ChatWithData = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const userInfo = localStorage.getItem('userInfo');
+        const token = userInfo ? JSON.parse(userInfo).token : null;
+        if (!token) return;
+
+        const API_URL = import.meta.env.VITE_API_URL || '';
+        const response = await fetch(`${API_URL}/api/ai/chat`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) {
+            setMessages(prev => [prev[0], ...data]);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch chat history:", error);
+      } finally {
+        setFetchingHistory(false);
+      }
+    };
+    fetchHistory();
+  }, []);
 
   const handleSend = async (messageText = input) => {
     if (!messageText.trim()) return;
@@ -29,14 +59,13 @@ const ChatWithData = () => {
       const userInfo = localStorage.getItem('userInfo');
       const token = userInfo ? JSON.parse(userInfo).token : null;
       const API_URL = import.meta.env.VITE_API_URL || '';
-      const historyToSend = messages.slice(1); // Exclude the initial greeting
       const response = await fetch(`${API_URL}/api/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ message: messageText, history: historyToSend })
+        body: JSON.stringify({ message: messageText })
       });
 
       if (!response.ok) throw new Error('Failed to fetch');
@@ -52,12 +81,26 @@ const ChatWithData = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)] space-y-4">
-      <div className="flex items-center gap-3 mb-2">
-        <MessageSquare className="text-yellow-500" size={32} />
-        <h2 className="text-2xl font-bold text-white">Chat With Data</h2>
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex items-center gap-3">
+          <MessageSquare className="text-yellow-500" size={32} />
+          <h2 className="text-2xl font-bold text-white">Chat With Data</h2>
+        </div>
+        <button 
+          onClick={clearChat}
+          className="text-gray-400 hover:text-red-400 transition-colors flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-sm"
+        >
+          <Trash2 size={16} />
+          Clear Chat
+        </button>
       </div>
 
-      <div className="flex-1 glass-card p-6 flex flex-col overflow-hidden">
+      <div className="flex-1 glass-card p-6 flex flex-col overflow-hidden relative">
+        {fetchingHistory && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10 flex-col gap-4">
+             <Loader className="animate-spin text-yellow-500" size={32} />
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
           {messages.map((msg, index) => (
             <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
