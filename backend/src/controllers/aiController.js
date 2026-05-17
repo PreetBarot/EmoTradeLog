@@ -47,7 +47,7 @@ export const getNewsCorrelation = async (req, res) => {
     `;
 
     const result = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-1.5-flash',
         contents: prompt,
     });
     
@@ -65,7 +65,12 @@ export const getNewsCorrelation = async (req, res) => {
 
   } catch (error) {
     console.error("Error in getNewsCorrelation:", error);
-    res.status(500).json({ message: "Failed to generate news correlation insight." });
+    // Fallback instead of crashing the UI
+    res.status(200).json({
+      upcomingNews: [],
+      insight: "Could not generate AI insight due to an API error. Please ensure your GEMINI_API_KEY is correctly configured on Render.",
+      suggestedRule: "Check your API settings."
+    });
   }
 };
 
@@ -127,7 +132,7 @@ export const getWeeklyReport = async (req, res) => {
     `;
 
     const result = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-1.5-flash',
         contents: prompt,
     });
 
@@ -140,6 +145,60 @@ export const getWeeklyReport = async (req, res) => {
 
   } catch (error) {
     console.error("Error in getWeeklyReport:", error);
-    res.status(500).json({ message: "Failed to generate weekly report." });
+    res.status(200).json({
+      grade: "N/A",
+      executiveSummary: "Could not generate report due to an AI error. Please check your GEMINI_API_KEY in Render dashboard.",
+      keyHighlights: ["Error connecting to Gemini API"]
+    });
+  }
+};
+
+export const chatWithData = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { message } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ message: "Message is required." });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({ reply: "I am a mock AI assistant because the GEMINI_API_KEY is missing on the server. Your question was: " + message });
+    }
+
+    // Fetch all user trades to pass context
+    const trades = await Trade.find({ user: userId });
+    
+    const summaryData = trades.map(t => ({
+      symbol: t.symbol,
+      type: t.type,
+      pnl: t.pnl,
+      isWinner: t.isWinner,
+      date: t.date,
+      emotion: t.emotion,
+      rating: t.rating
+    }));
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    
+    const prompt = `
+    You are an expert trading AI assistant. A user is asking you a question about their trading journal data.
+    Here is their trading data: ${JSON.stringify(summaryData)}
+    
+    User Question: "${message}"
+    
+    Provide a helpful, direct, and concise response to the user's question based on their data. Keep it under 4 sentences.
+    `;
+
+    const result = await ai.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: prompt,
+    });
+
+    res.status(200).json({ reply: result.text });
+
+  } catch (error) {
+    console.error("Error in chatWithData:", error);
+    res.status(200).json({ reply: "I encountered an error connecting to my AI brain. Please check your API settings." });
   }
 };
