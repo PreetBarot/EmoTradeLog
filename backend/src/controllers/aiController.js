@@ -156,7 +156,7 @@ export const getWeeklyReport = async (req, res) => {
 export const chatWithData = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { message } = req.body;
+    const { message, history } = req.body;
     
     if (!message) {
       return res.status(400).json({ message: "Message is required." });
@@ -181,11 +181,16 @@ export const chatWithData = async (req, res) => {
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
+    let historyText = "";
+    if (history && history.length > 0) {
+      historyText = "Conversation History:\n" + history.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.text}`).join('\n') + "\n\n";
+    }
+
     const prompt = `
     You are an expert trading AI assistant. A user is asking you a question about their trading journal data.
     Here is their trading data: ${JSON.stringify(summaryData)}
     
-    User Question: "${message}"
+    ${historyText}User Question: "${message}"
     
     Provide a helpful, direct, and concise response to the user's question based on their data. Keep it under 4 sentences.
     `;

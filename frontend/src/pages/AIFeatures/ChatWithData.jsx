@@ -29,13 +29,14 @@ const ChatWithData = () => {
       const userInfo = localStorage.getItem('userInfo');
       const token = userInfo ? JSON.parse(userInfo).token : null;
       const API_URL = import.meta.env.VITE_API_URL || '';
+      const historyToSend = messages.slice(1); // Exclude the initial greeting
       const response = await fetch(`${API_URL}/api/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ message: messageText })
+        body: JSON.stringify({ message: messageText, history: historyToSend })
       });
 
       if (!response.ok) throw new Error('Failed to fetch');
