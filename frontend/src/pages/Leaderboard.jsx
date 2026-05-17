@@ -55,12 +55,16 @@ const Leaderboard = () => {
             <tbody>
               {leaderboardData.map((trader, index) => {
                 const rank = index + 1;
+                const traderName = trader.firstName || trader.lastName 
+                  ? `${trader.firstName || ''} ${trader.lastName || ''}`.trim()
+                  : 'Anonymous Trader';
+                
                 return (
                   <tr key={trader._id} className="border-b border-white/5 hover:bg-white/5">
                     <td className="py-4 font-bold text-yellow-500 flex items-center gap-2">
                       {rank === 1 && <Medal size={16} />} #{rank}
                     </td>
-                    <td className="py-4 font-semibold text-white">{trader.name || 'Anonymous Trader'}</td>
+                    <td className="py-4 font-semibold text-white">{traderName}</td>
                     <td className={`py-4 font-bold ${trader.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {trader.totalPnl >= 0 ? '+' : '-'}${Math.abs(trader.totalPnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
