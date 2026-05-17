@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Users, Send, Loader, Image as ImageIcon, X } from 'lucide-react';
+import { Users, Send, Loader, Image as ImageIcon, X, Trash2 } from 'lucide-react';
 
 const Community = () => {
   const [messages, setMessages] = useState([]);
@@ -74,6 +74,32 @@ const Community = () => {
     setImagePreview('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    if (!window.confirm("Are you sure you want to delete this message?")) return;
+    
+    try {
+      const userInfo = localStorage.getItem('userInfo');
+      const token = userInfo ? JSON.parse(userInfo).token : null;
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      
+      const response = await fetch(`${API_URL}/api/community/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        // Optimistically remove from UI
+        setMessages(prev => prev.filter(msg => msg._id !== messageId));
+      } else {
+        alert("Failed to delete message");
+      }
+    } catch (error) {
+      console.error("Failed to delete message:", error);
     }
   };
 
@@ -164,11 +190,11 @@ const Community = () => {
               const senderName = msg.user ? `${msg.user.firstName || ''} ${msg.user.lastName || ''}`.trim() || 'Anonymous' : 'Deleted User';
               
               return (
-                <div key={msg._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                <div key={msg._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} group relative`}>
                   <span className="text-xs text-gray-500 mb-1 ml-1 mr-1">
                     {isMe ? 'You' : senderName} • {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </span>
-                  <div className={`p-3 max-w-[80%] rounded-2xl text-sm flex flex-col gap-2 ${
+                  <div className={`relative p-3 max-w-[80%] rounded-2xl text-sm flex flex-col gap-2 ${
                     isMe 
                       ? 'bg-yellow-500/20 border border-yellow-500/30 text-white rounded-tr-none' 
                       : 'bg-white/5 border border-white/10 text-gray-200 rounded-tl-none'
@@ -179,6 +205,16 @@ const Community = () => {
                       </a>
                     )}
                     {msg.text && <span>{msg.text}</span>}
+                    
+                    {isMe && (
+                      <button 
+                        onClick={() => handleDeleteMessage(msg._id)}
+                        className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Delete message"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
