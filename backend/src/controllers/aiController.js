@@ -74,11 +74,12 @@ export const getNewsCorrelation = async (req, res) => {
           const result = await ai.models.generateContent({
               model: 'gemini-2.5-flash',
               contents: prompt,
+              config: {
+                responseMimeType: 'application/json',
+              }
           });
           
-          let textResult = result.text;
-          textResult = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
-          const parsedResult = JSON.parse(textResult);
+          const parsedResult = JSON.parse(result.text);
           insight = parsedResult.insight;
           suggestedRule = parsedResult.suggestedRule;
         } catch (aiError) {
@@ -326,12 +327,12 @@ export const getTradeCoach = async (req, res) => {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+      }
     });
 
-    let jsonString = response.text;
-    jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-    const analysis = JSON.parse(jsonString);
+    const analysis = JSON.parse(response.text);
     res.status(200).json(analysis);
 
   } catch (error) {
@@ -387,12 +388,12 @@ export const getPatternFinder = async (req, res) => {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+      }
     });
 
-    let jsonString = response.text;
-    jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-    const analysis = JSON.parse(jsonString);
+    const analysis = JSON.parse(response.text);
     res.status(200).json(analysis);
 
   } catch (error) {
@@ -451,12 +452,12 @@ export const getRiskAdvisor = async (req, res) => {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+      }
     });
 
-    let jsonString = response.text;
-    jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-    const analysis = JSON.parse(jsonString);
+    const analysis = JSON.parse(response.text);
     res.status(200).json(analysis);
 
   } catch (error) {
