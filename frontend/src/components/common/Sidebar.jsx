@@ -42,11 +42,12 @@ const Sidebar = ({ onClose }) => {
     const userInfo = localStorage.getItem('userInfo');
     if (userInfo) {
       const parsed = JSON.parse(userInfo);
+      const userData = parsed.user || parsed;
       // Ensure we have a name property to avoid crashes
-      if (!parsed.name) {
-        parsed.name = `${parsed.firstName || ''} ${parsed.lastName || ''}`.trim() || 'Trader';
+      if (!userData.name) {
+        userData.name = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Trader';
       }
-      setUser(parsed);
+      setUser(userData);
     }
   }, []);
 

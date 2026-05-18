@@ -20,6 +20,7 @@ import Leaderboard from './pages/Leaderboard';
 import Backtesting from './pages/Backtesting';
 import Integrations from './pages/Integrations';
 import ConnectMT5 from './pages/ConnectMT5';
+import Settings from './pages/Settings';
 
 const router = createBrowserRouter([
   {
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
       { path: '/backtesting', element: <Backtesting /> },
       { path: '/integrations', element: <Integrations /> },
       { path: '/connect-mt5', element: <ConnectMT5 /> },
+      { path: '/settings', element: <Settings /> },
     ],
   },
 ]);
