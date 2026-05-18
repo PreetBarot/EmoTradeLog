@@ -21,7 +21,7 @@ const Community = () => {
       const token = userInfo ? JSON.parse(userInfo).token : null;
       if (userInfo) {
         const parsed = JSON.parse(userInfo);
-        setCurrentUserId(parsed.id || parsed._id);
+        setCurrentUserId(parsed.user?.id || parsed.user?._id || parsed.id || parsed._id);
       }
       
       const API_URL = import.meta.env.VITE_API_URL || '';
