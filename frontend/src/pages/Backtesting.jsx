@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { PlayCircle, PauseCircle, SkipForward, TrendingUp, TrendingDown, DollarSign, Settings, Loader } from 'lucide-react';
+import { PlayCircle, PauseCircle, SkipForward, TrendingUp, TrendingDown, DollarSign, Settings, Loader, History } from 'lucide-react';
 import { createChart } from 'lightweight-charts';
 
 const Backtesting = () => {
