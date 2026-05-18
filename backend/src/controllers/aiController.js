@@ -60,12 +60,12 @@ export const getNewsCorrelation = async (req, res) => {
         try {
           const prompt = `
           You are an expert trading psychology and data correlation AI. 
-          The user is a day trader. Here is the important (High/Medium impact) news data for the selected date: ${JSON.stringify(importantNews)}
-          Provide a brief correlation insight (maximum 3 sentences) predicting how the user's emotions (like FOMO or anxiety) and win rate might be affected by these specific news releases based on typical retail trader behavior.
+          The user is a day trader trading XAUUSD (Gold). Here is the important (High/Medium impact) USD news data for the selected date: ${JSON.stringify(importantNews)}
+          Based on this news data, analyze the potential impact on XAUUSD. Specifically tell the user whether XAUUSD is likely to go for an up trend or a down trend and briefly explain why.
           Also, provide a single, actionable "Suggested Rule" to mitigate risk during these news events.
           Format your response EXACTLY as a JSON object:
           {
-            "insight": "Your brief insight...",
+            "insight": "Your prediction (up trend / down trend) and brief explanation...",
             "suggestedRule": "Your suggested rule..."
           }
           Ensure the output is valid JSON, do not wrap it in markdown code blocks.
@@ -398,5 +398,69 @@ export const getPatternFinder = async (req, res) => {
   } catch (error) {
     console.error("Error generating pattern finder insights:", error);
     res.status(500).json({ message: "Server error generating pattern finder insights" });
+  }
+};
+
+export const getRiskAdvisor = async (req, res) => {
+  try {
+    const trades = await Trade.find({ user: req.user._id }).sort({ date: -1 }).limit(20);
+
+    if (!trades || trades.length < 3) {
+      return res.status(200).json({
+        notEnoughData: true,
+        message: "Not enough data. Please log at least 3 trades for the AI to calculate risk exposure."
+      });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ message: "Gemini API key not configured" });
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+    const tradeSummary = trades.map(t => 
+      `Date: ${t.date}, Pair: ${t.pair}, Type: ${t.type}, PnL: ${t.pnl}, Setup: ${t.setup}, Note: ${t.notes}`
+    ).join('\n');
+
+    const prompt = `You are a strict Risk Management AI Advisor for a forex trader. Analyze the following 20 recent trades from a user.
+    
+    Trade Data:
+    ${tradeSummary}
+
+    Based on their recent trade volume, win/loss streak, and pairs traded, calculate an estimated "Current Risk Exposure" percentage.
+    Then, generate 2 active warnings or insights about their current risk behavior (e.g. overtrading, holding correlated pairs, revenge trading).
+    
+    Provide a strict JSON response with exactly this structure:
+    {
+      "currentRiskExposure": "A percentage string (e.g. 1.2%, 3.5%)",
+      "exposureStatus": "A brief description (e.g. 'Well within your 2% maximum daily limit.' or 'Dangerously high risk exposure.')",
+      "warnings": [
+        {
+          "type": "warning", 
+          "message": "Warning: You are currently holding multiple correlated pairs. This doubles your risk exposure."
+        },
+        {
+          "type": "info",
+          "message": "Info: No upcoming high-impact news events in the next 2 hours. Safe to maintain current positions."
+        }
+      ]
+    }
+    
+    Return strictly JSON, without any markdown formatting like \`\`\`json. Make sure the JSON is perfectly valid.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    let jsonString = response.text;
+    jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    const analysis = JSON.parse(jsonString);
+    res.status(200).json(analysis);
+
+  } catch (error) {
+    console.error("Error generating risk advisor insights:", error);
+    res.status(500).json({ message: "Server error generating risk advisor insights" });
   }
 };

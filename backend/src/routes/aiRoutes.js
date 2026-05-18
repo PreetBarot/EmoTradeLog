@@ -1,5 +1,5 @@
 import express from 'express';
-import { getNewsCorrelation, getWeeklyReport, chatWithData, getChatHistory, clearChatHistory, getTradeCoach, getPatternFinder } from '../controllers/aiController.js';
+import { getNewsCorrelation, getWeeklyReport, chatWithData, getChatHistory, clearChatHistory, getTradeCoach, getPatternFinder, getRiskAdvisor } from '../controllers/aiController.js';
 import { protect } from '../middleware/authMiddleware.js'; // Ensure user is authenticated
 
 const router = express.Router();
@@ -12,5 +12,6 @@ router.get('/chat', protect, getChatHistory);
 router.delete('/chat', protect, clearChatHistory);
 router.get('/trade-coach', protect, getTradeCoach);
 router.get('/pattern-finder', protect, getPatternFinder);
+router.get('/risk-advisor', protect, getRiskAdvisor);
 
 export default router;
