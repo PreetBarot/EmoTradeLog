@@ -68,3 +68,55 @@ export const getHistoricalData = async (req, res) => {
     });
   }
 };
+
+export const getMarketQuotes = async (req, res) => {
+  try {
+    const quotes = [];
+
+    // 1. Fetch Crypto from Binance (BTC, ETH)
+    try {
+      const binanceResponse = await axios.get(`https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT"]`);
+      binanceResponse.data.forEach(item => {
+        quotes.push({
+          symbol: item.symbol.replace('USDT', '/USD'),
+          price: parseFloat(item.lastPrice).toFixed(2),
+          change: parseFloat(item.priceChangePercent).toFixed(2),
+          type: 'crypto'
+        });
+      });
+    } catch (binanceError) {
+      console.error("Error fetching Binance quotes:", binanceError.message);
+    }
+
+    // 2. Fetch Forex/Commodities from Twelve Data
+    try {
+      const apiKey = process.env.TWELVE_DATA_API_KEY;
+      if (apiKey) {
+        const tdResponse = await axios.get(`https://api.twelvedata.com/quote?symbol=EUR/USD,GBP/USD,USD/JPY,XAU/USD&apikey=${apiKey}`);
+        
+        // Twelve Data returns an object with symbols as keys when requesting multiple symbols
+        const tdData = tdResponse.data;
+        if (!tdData.status || tdData.status !== 'error') {
+          Object.values(tdData).forEach(item => {
+            if (item && item.symbol) {
+              quotes.push({
+                symbol: item.symbol,
+                price: parseFloat(item.close).toFixed(5),
+                change: parseFloat(item.percent_change).toFixed(2),
+                type: item.symbol === 'XAU/USD' ? 'commodity' : 'forex'
+              });
+            }
+          });
+        }
+      }
+    } catch (tdError) {
+      console.error("Error fetching Twelve Data quotes:", tdError.message);
+    }
+
+    res.status(200).json(quotes);
+
+  } catch (error) {
+    console.error("Error in getMarketQuotes:", error);
+    res.status(500).json({ message: "Server error fetching market quotes" });
+  }
+};
