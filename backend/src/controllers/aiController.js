@@ -274,6 +274,129 @@ export const clearChatHistory = async (req, res) => {
     res.status(200).json({ message: "Chat history cleared" });
   } catch (error) {
     console.error("Error in clearChatHistory:", error);
-    res.status(500).json({ message: "Failed to clear chat history" });
+    res.status(500).json({ message: "Server error clearing chat history" });
+  }
+};
+
+export const getTradeCoach = async (req, res) => {
+  try {
+    const trades = await Trade.find({ user: req.user._id }).sort({ date: -1 }).limit(50);
+
+    if (!trades || trades.length < 5) {
+      return res.status(200).json({
+        notEnoughData: true,
+        message: "Not enough data. Please log at least 5 trades for the AI to analyze your performance."
+      });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ message: "Gemini API key not configured" });
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+    // Calculate some basic stats to help the AI
+    const wins = trades.filter(t => t.pnl > 0).length;
+    const losses = trades.filter(t => t.pnl <= 0).length;
+    const winRate = ((wins / trades.length) * 100).toFixed(2);
+    const totalPnl = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+
+    const tradeSummary = trades.map(t => 
+      `Date: ${t.date}, Pair: ${t.pair}, Type: ${t.type}, PnL: ${t.pnl}, Emotion: ${t.emotion}, Note: ${t.notes}`
+    ).join('\n');
+
+    const prompt = `You are an expert AI trading coach. Analyze the following 50 recent trades from a user.
+    Total Trades: ${trades.length}
+    Win Rate: ${winRate}%
+    Total PnL: $${totalPnl}
+
+    Trade Data:
+    ${tradeSummary}
+
+    Based on this data, provide a strict JSON response with the following keys:
+    {
+      "tradeScore": "A letter grade (e.g., A, B+, C-)",
+      "recommendation": "A brief paragraph advising the user on what to focus on",
+      "strengths": ["bullet point 1", "bullet point 2", "bullet point 3"],
+      "weaknesses": ["bullet point 1", "bullet point 2", "bullet point 3"]
+    }
+    
+    Return strictly JSON, without any markdown formatting like \`\`\`json. Make sure the JSON is perfectly valid.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    let jsonString = response.text;
+    jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    const analysis = JSON.parse(jsonString);
+    res.status(200).json(analysis);
+
+  } catch (error) {
+    console.error("Error generating trade coach insights:", error);
+    res.status(500).json({ message: "Server error generating trade coach insights" });
+  }
+};
+
+export const getPatternFinder = async (req, res) => {
+  try {
+    const trades = await Trade.find({ user: req.user._id }).sort({ date: -1 }).limit(100);
+
+    if (!trades || trades.length < 5) {
+      return res.status(200).json({
+        notEnoughData: true,
+        message: "Not enough data. Please log at least 5 trades for the AI to find patterns."
+      });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ message: "Gemini API key not configured" });
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+    const tradeSummary = trades.map(t => 
+      `Date: ${t.date}, Pair: ${t.pair}, Type: ${t.type}, PnL: ${t.pnl}, Emotion: ${t.emotion}, Setup: ${t.setup}`
+    ).join('\n');
+
+    const prompt = `You are a sophisticated AI pattern recognition algorithm for forex trading. Analyze the following recent trades from a user.
+    
+    Trade Data:
+    ${tradeSummary}
+
+    Find the most significant profitable pattern and the most significant losing pattern. Look for correlations involving pairs, time of day, emotions, setups, or win streaks/loss streaks.
+    
+    Provide a strict JSON response with exactly this structure:
+    {
+      "profitablePattern": {
+        "title": "A short 3-5 word title",
+        "confidence": "e.g., High Confidence, Medium Confidence",
+        "description": "A 1-2 sentence description of the pattern (e.g. You have a 78% win rate when trading Breakout strategies on EUR/USD)."
+      },
+      "losingPattern": {
+        "title": "A short 3-5 word title",
+        "actionRequired": "e.g., Action Required, Warning",
+        "description": "A 1-2 sentence description of the pattern (e.g. Taking more than 3 trades a day reduces your daily profitability by 40%)."
+      }
+    }
+    
+    Return strictly JSON, without any markdown formatting like \`\`\`json. Make sure the JSON is perfectly valid.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    let jsonString = response.text;
+    jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    const analysis = JSON.parse(jsonString);
+    res.status(200).json(analysis);
+
+  } catch (error) {
+    console.error("Error generating pattern finder insights:", error);
+    res.status(500).json({ message: "Server error generating pattern finder insights" });
   }
 };
