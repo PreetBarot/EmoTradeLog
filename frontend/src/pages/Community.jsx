@@ -20,7 +20,8 @@ const Community = () => {
       const userInfo = localStorage.getItem('userInfo');
       const token = userInfo ? JSON.parse(userInfo).token : null;
       if (userInfo) {
-        setCurrentUserId(JSON.parse(userInfo)._id);
+        const parsed = JSON.parse(userInfo);
+        setCurrentUserId(parsed.id || parsed._id);
       }
       
       const API_URL = import.meta.env.VITE_API_URL || '';
