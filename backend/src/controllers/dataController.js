@@ -75,7 +75,7 @@ export const getMarketQuotes = async (req, res) => {
 
     // 1. Fetch Crypto from Binance (BTC, ETH)
     try {
-      const binanceResponse = await axios.get(`https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT"]`);
+      const binanceResponse = await axios.get(`https://api.binance.us/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT"]`);
       binanceResponse.data.forEach(item => {
         quotes.push({
           symbol: item.symbol.replace('USDT', '/USD'),
