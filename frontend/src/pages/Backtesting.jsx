@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { PlayCircle, PauseCircle, SkipForward, TrendingUp, TrendingDown, DollarSign, Settings, Loader, History } from 'lucide-react';
+import { PlayCircle, PauseCircle, SkipForward, TrendingUp, TrendingDown, DollarSign, Settings, Loader, History, Maximize } from 'lucide-react';
 import { createChart } from 'lightweight-charts';
 
 const Backtesting = () => {
@@ -26,6 +26,9 @@ const Backtesting = () => {
   const [balance, setBalance] = useState(10000);
   const [openPosition, setOpenPosition] = useState(null); // { type: 'LONG'|'SHORT', entryPrice, size }
   const [tradeHistory, setTradeHistory] = useState([]);
+  
+  // UI State
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Initialize Chart
   useEffect(() => {
@@ -179,6 +182,26 @@ const Backtesting = () => {
     }
   };
 
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      chartContainerRef.current?.parentElement?.requestFullscreen().catch(err => {
+        console.error("Error attempting to enable fullscreen:", err);
+      });
+      setIsFullScreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullScreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   const currentPrice = fullData[currentIndex]?.close || 0;
   const floatingPnL = openPosition 
     ? (openPosition.type === 'LONG' 
@@ -241,15 +264,26 @@ const Backtesting = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 glass-card p-1 overflow-hidden relative">
+        <div className={`lg:col-span-3 glass-card p-1 overflow-hidden relative ${isFullScreen ? 'h-screen w-screen bg-gray-900 rounded-none z-50 fixed inset-0' : ''}`}>
           {fullData.length === 0 && !loading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-10">
               <History size={48} className="text-gray-600 mb-4" />
               <p className="text-gray-400">Configure settings and Load Data to begin.</p>
             </div>
           )}
-          <div ref={chartContainerRef} className="w-full h-[500px]" />
+          <div ref={chartContainerRef} className={`w-full ${isFullScreen ? 'h-full' : 'h-[500px]'}`} />
           
+          {/* Top Right Controls Overlay */}
+          <div className="absolute top-4 right-4 z-10 flex gap-2">
+             <button 
+                onClick={toggleFullScreen}
+                className="p-2 rounded-lg bg-black/60 hover:bg-black/80 text-gray-300 hover:text-white transition-colors border border-white/10"
+                title="Toggle Full Screen"
+              >
+                <Maximize size={20} />
+              </button>
+          </div>
+
           {/* Replay Controls Overlaid */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/10 p-2 rounded-full z-10">
             <button 
