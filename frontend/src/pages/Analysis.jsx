@@ -6,9 +6,7 @@ import useTradeStore from '../store/useTradeStore';
 import { useEffect, useMemo } from 'react';
 import { calculateTradeStats } from '../utils/tradeStats';
 
-const mockEquityData = [];
 
-const mockDayPerformance = [];
 
 const Analysis = () => {
   const { trades, fetchTrades } = useTradeStore();
@@ -43,7 +41,53 @@ const Analysis = () => {
     fetchTrades();
   }, [fetchTrades]);
 
-  const stats = useMemo(() => calculateTradeStats(trades), [trades]);
+  const filteredTrades = useMemo(() => {
+    const now = new Date();
+    let filtered = [...trades];
+
+    // Filter by Time Period
+    if (timePeriod !== 'All Time') {
+      const msPerDay = 24 * 60 * 60 * 1000;
+      let days = 0;
+      if (timePeriod === 'Today') days = 1;
+      else if (timePeriod === '7 Days') days = 7;
+      else if (timePeriod === '30 Days') days = 30;
+      else if (timePeriod === '3 Months') days = 90;
+      else if (timePeriod === '1 Year') days = 365;
+
+      // Handle 'Today' differently to just match the current calendar date
+      if (timePeriod === 'Today') {
+        filtered = filtered.filter(t => new Date(t.date).toDateString() === now.toDateString());
+      } else {
+        const cutoff = new Date(now.getTime() - days * msPerDay);
+        filtered = filtered.filter(t => new Date(t.date) >= cutoff);
+      }
+    }
+
+    // Filter by Trade Outcome
+    if (filterBy === 'Winners') {
+      filtered = filtered.filter(t => t.pnl > 0);
+    } else if (filterBy === 'Losers') {
+      filtered = filtered.filter(t => t.pnl <= 0);
+    }
+
+    // Sort by date ascending for charts
+    return filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [trades, timePeriod, filterBy]);
+
+  const stats = useMemo(() => calculateTradeStats(filteredTrades), [filteredTrades]);
+
+  // Generate real equity curve
+  const equityData = useMemo(() => {
+    let currentEquity = 0;
+    return filteredTrades.map(t => {
+      currentEquity += t.pnl;
+      return {
+        date: new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        equity: parseFloat(currentEquity.toFixed(2))
+      };
+    });
+  }, [filteredTrades]);
 
   return (
     <div className="space-y-6 pb-12">
@@ -173,17 +217,17 @@ const Analysis = () => {
             </div>
           </div>
           <div className="flex-1 min-h-[300px]">
-            {mockEquityData.length === 0 ? (
+            {equityData.length === 0 ? (
               <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 border border-dashed border-white/10 rounded-xl">
                 <Activity size={32} className="mb-2 opacity-50 text-blue-400" />
-                <p className="text-sm">Log your first trade to generate your equity curve.</p>
+                <p className="text-sm">No trades found for this period.</p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockEquityData}>
+                <LineChart data={equityData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" tick={{fill: 'rgba(255,255,255,0.5)', fontSize: 12}} tickLine={false} axisLine={false} />
-                  <YAxis stroke="rgba(255,255,255,0.5)" tick={{fill: 'rgba(255,255,255,0.5)', fontSize: 12}} tickLine={false} axisLine={false} domain={['dataMin - 1000', 'dataMax + 1000']} />
+                  <YAxis stroke="rgba(255,255,255,0.5)" tick={{fill: 'rgba(255,255,255,0.5)', fontSize: 12}} tickLine={false} axisLine={false} domain={['dataMin - 100', 'dataMax + 100']} />
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }}
                     itemStyle={{ color: '#3b82f6', fontWeight: 'bold' }}
