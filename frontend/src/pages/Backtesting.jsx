@@ -8,8 +8,7 @@ const Backtesting = () => {
   const candlestickSeriesRef = useRef(null);
 
   // Configuration State
-  const [assetClass, setAssetClass] = useState('crypto'); // 'crypto' (Binance) or 'forex' (Twelve Data)
-  const [symbol, setSymbol] = useState('BTCUSDT');
+  const [symbol, setSymbol] = useState('XAU/USD');
   const [interval, setIntervalVal] = useState('1h');
   
   // Data State
@@ -82,7 +81,7 @@ const Backtesting = () => {
       const token = userInfo ? JSON.parse(userInfo).token : null;
       const API_URL = import.meta.env.VITE_API_URL || '';
       
-      const source = assetClass === 'crypto' ? 'binance' : 'twelvedata';
+      const source = 'twelvedata';
       // Adjust interval mapping if needed for Twelve Data (e.g. 1h -> 1h)
       
       const response = await fetch(`${API_URL}/api/data/klines?symbol=${symbol}&interval=${interval}&source=${source}&limit=1000`, {
@@ -207,26 +206,10 @@ const Backtesting = () => {
 
       <div className="glass-card p-4 flex flex-wrap gap-4 items-end z-20 relative">
         <div className="space-y-1">
-          <label className="text-xs text-gray-400">Market</label>
-          <select 
-            value={assetClass} 
-            onChange={(e) => setAssetClass(e.target.value)}
-            className="bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-yellow-500 block"
-          >
-            <option value="crypto">Crypto (Binance)</option>
-            <option value="forex">Forex/Stocks (Twelve Data)</option>
-          </select>
-        </div>
-        
-        <div className="space-y-1">
-          <label className="text-xs text-gray-400">Symbol</label>
-          <input 
-            type="text" 
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            className="bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-yellow-500 w-32 uppercase"
-            placeholder={assetClass === 'crypto' ? 'BTCUSDT' : 'EUR/USD'}
-          />
+          <label className="text-xs text-gray-400">Asset</label>
+          <div className="bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-yellow-500 font-bold px-4">
+            XAU/USD (Gold)
+          </div>
         </div>
 
         <div className="space-y-1">
