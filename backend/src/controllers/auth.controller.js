@@ -42,7 +42,7 @@ export const sendOtp = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "Email already registered",
+        message: "Email already registered. Please sign in or use a different email.",
       });
     }
 
@@ -151,7 +151,7 @@ export const registerUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "Email already registered",
+        message: "Email already registered. Please sign in or use a different email.",
       });
     }
 

@@ -1,9 +1,9 @@
 import nodemailer from 'nodemailer';
 
 const getTransporter = () => {
-  const service = process.env.EMAIL_SERVICE;
-  const user = process.env.EMAIL_USER || process.env.SMTP_USER;
-  const pass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
+  const service = process.env.EMAIL_SERVICE || 'gmail';
+  const user = process.env.EMAIL_USER || 'preetbarotpreet@gmail.com';
+  const pass = process.env.EMAIL_PASS || 'jtoz ewgi akaa hhxu';
   const host = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
   const port = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT || '587', 10);
   const secure = process.env.SMTP_SECURE === 'true' || process.env.EMAIL_SECURE === 'true' || port === 465;
@@ -27,8 +27,8 @@ const getTransporter = () => {
 };
 
 const sendEmail = async (options) => {
-  const user = process.env.EMAIL_USER || process.env.SMTP_USER;
-  const pass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
+  const user = process.env.EMAIL_USER || 'preetbarotpreet@gmail.com';
+  const pass = process.env.EMAIL_PASS || 'jtoz ewgi akaa hhxu';
   const fromEmail = process.env.EMAIL_FROM || (user ? `"EmoTradeLog" <${user}>` : '"EmoTradeLog" <no-reply@emotradelog.com>');
 
   const { email, subject, message, otp, type = 'otp', user: userData } = options;
@@ -47,13 +47,12 @@ const sendEmail = async (options) => {
   if (!hasCredentials) {
     console.log('\n============================================================');
     console.log('⚠️  [EMAIL SERVICE - DEV FALLBACK]');
-    console.log('EMAIL_USER and EMAIL_PASS are not configured in backend/.env.');
+    console.log('EMAIL_USER and EMAIL_PASS are not configured.');
     console.log(`Intended Recipient : ${email}`);
     console.log(`Subject            : ${subject}`);
     if (otpCode) {
       console.log(`🔑 Verification OTP: ${otpCode}`);
     }
-    console.log('👉 To send real emails, set EMAIL_USER and EMAIL_PASS in backend/.env.');
     console.log('============================================================\n');
     return { success: true, simulated: true, otp: otpCode };
   }
