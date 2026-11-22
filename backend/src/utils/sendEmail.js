@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import axios from 'axios';
 
 const getTransporter = () => {
   const service = process.env.EMAIL_SERVICE || 'gmail';
@@ -15,6 +16,9 @@ const getTransporter = () => {
         user,
         pass,
       },
+      connectionTimeout: 4000,
+      greetingTimeout: 4000,
+      socketTimeout: 4000,
     });
   }
 
@@ -23,6 +27,9 @@ const getTransporter = () => {
     port,
     secure,
     auth: user && pass ? { user, pass } : undefined,
+    connectionTimeout: 4000,
+    greetingTimeout: 4000,
+    socketTimeout: 4000,
   });
 };
 
@@ -35,27 +42,6 @@ const sendEmail = async (options) => {
 
   // Extract OTP if passed in message or otp prop
   const otpCode = otp || (message ? message.match(/\d{4,8}/)?.[0] : '');
-
-  // Check if credentials are configured
-  const hasCredentials = Boolean(
-    user &&
-    pass &&
-    !user.includes('your_') &&
-    !pass.includes('your_')
-  );
-
-  if (!hasCredentials) {
-    console.log('\n============================================================');
-    console.log('⚠️  [EMAIL SERVICE - DEV FALLBACK]');
-    console.log('EMAIL_USER and EMAIL_PASS are not configured.');
-    console.log(`Intended Recipient : ${email}`);
-    console.log(`Subject            : ${subject}`);
-    if (otpCode) {
-      console.log(`🔑 Verification OTP: ${otpCode}`);
-    }
-    console.log('============================================================\n');
-    return { success: true, simulated: true, otp: otpCode };
-  }
 
   let htmlContent = '';
   let textContent = message || '';
@@ -158,6 +144,34 @@ const sendEmail = async (options) => {
     `;
   }
 
+  // Option 1: Brevo HTTP REST API (HTTPS port 443 - bypasses all cloud SMTP port blocks like Render Free)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const brevoRes = await axios.post(
+        'https://api.brevo.com/v3/smtp/email',
+        {
+          sender: { name: 'EmoTradeLog', email: user },
+          to: [{ email }],
+          subject,
+          htmlContent,
+          textContent,
+        },
+        {
+          headers: {
+            'api-key': process.env.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          timeout: 5000,
+        }
+      );
+      console.log(`✅ [BREVO HTTP] Email sent to ${email}. MessageId:`, brevoRes.data?.messageId);
+      return { success: true, messageId: brevoRes.data?.messageId };
+    } catch (brevoErr) {
+      console.error('❌ [BREVO HTTP ERROR]:', brevoErr.response?.data || brevoErr.message);
+    }
+  }
+
+  // Option 2: Standard Nodemailer SMTP
   try {
     const transporter = getTransporter();
     const mailOptions = {

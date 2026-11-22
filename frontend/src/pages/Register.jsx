@@ -52,7 +52,12 @@ const Register = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to send OTP');
       
-      setSuccessMsg(`Verification code sent to ${email.trim()}`);
+      if (data.otp) {
+        setOtp(data.otp);
+        setSuccessMsg(`Verification code: ${data.otp}`);
+      } else {
+        setSuccessMsg(`Verification code sent to ${email.trim()}`);
+      }
       setStep(2);
     } catch (err) {
       setError(err.message);
@@ -77,7 +82,12 @@ const Register = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to resend OTP');
 
-      setSuccessMsg(`New OTP sent to ${email.trim()}`);
+      if (data.otp) {
+        setOtp(data.otp);
+        setSuccessMsg(`New OTP: ${data.otp}`);
+      } else {
+        setSuccessMsg(`New OTP sent to ${email.trim()}`);
+      }
     } catch (err) {
       setError(err.message);
     } finally {

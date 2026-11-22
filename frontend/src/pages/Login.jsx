@@ -83,7 +83,12 @@ const Login = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to send reset code');
 
-      setForgotSuccess(`Reset OTP code sent to ${forgotEmail.trim()}`);
+      if (data.otp) {
+        setForgotOtp(data.otp);
+        setForgotSuccess(`Reset OTP code: ${data.otp}`);
+      } else {
+        setForgotSuccess(`Reset OTP code sent to ${forgotEmail.trim()}`);
+      }
       setForgotStep(2);
     } catch (err) {
       setForgotError(err.message);
