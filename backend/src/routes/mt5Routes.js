@@ -1,9 +1,21 @@
-import express from "express";
-import { receiveMT5Trade } from "../controllers/mt5Controller.js";
+import express from 'express';
 
 const router = express.Router();
 
-// Webhook endpoint for MT5 trade sync
-router.post("/trade", receiveMT5Trade);
+router.post('/sync', async (req, res) => {
+  try {
+    console.log('MT5 Sync API Hit');
+
+    res.json({
+      success: true,
+      message: 'MT5 sync successful',
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 
 export default router;

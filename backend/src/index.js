@@ -12,6 +12,7 @@ import aiRoutes from './routes/aiRoutes.js';
 import leaderboardRoutes from './routes/leaderboardRoutes.js';
 import communityRoutes from './routes/communityRoutes.js';
 import dataRoutes from './routes/dataRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -43,6 +44,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/data', dataRoutes);
+app.use('/api/users', userRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 
 app.get('/', (req, res) => {

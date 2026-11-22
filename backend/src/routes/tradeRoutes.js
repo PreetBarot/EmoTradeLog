@@ -1,8 +1,26 @@
 import express from 'express';
-import { getTrades, createTrade, updateTrade, deleteTrade } from '../controllers/tradeController.js';
+
+import {
+  getTrades,
+  createTrade,
+  syncTrade,
+  updateTrade,
+  deleteTrade
+} from '../controllers/tradeController.js';
+
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+// ==============================
+// MT5 AUTO SYNC ROUTE
+// ==============================
+
+router.post('/sync', syncTrade);
+
+// ==============================
+// USER ROUTES
+// ==============================
 
 router.route('/')
   .get(protect, getTrades)

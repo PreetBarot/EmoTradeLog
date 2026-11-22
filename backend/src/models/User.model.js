@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
     },
+    avatar: {
+      type: String,
+      default: null,
+    },
     apiKey: {
       type: String,
       unique: true,
@@ -36,6 +40,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: false,
       select: false, // never return by default
+    },
+    notifications: {
+      tradeAlerts: { type: Boolean, default: true },
+      weeklyReports: { type: Boolean, default: true },
+      communityMentions: { type: Boolean, default: true }
     },
   },
   {
